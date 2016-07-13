@@ -1,0 +1,27 @@
+{
+  "name": "sophia",
+  "version": "0.0.1",
+  "description": "SEO Tool for SPA and not only",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ITMCdev/nodejs-sophia.git"
+  },
+  "keywords": [
+    "spa",
+    "seo"
+  ],
+  "author": "Dragos Cirjan <dragosc.cirjan@itmediaconnect.ro>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ITMCdev/nodejs-sophia/issues"
+  },
+  "homepage": "https://github.com/ITMCdev/nodejs-sophia#readme",
+  "devDependencies": {
+    "extend": "^3.0.0",
+    "phantomjs-prebuilt": "^2.1.7"
+  }
+}
