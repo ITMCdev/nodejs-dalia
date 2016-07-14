@@ -14,3 +14,5 @@
  * http://aurelia.io/hub.html#/doc/api
  * https://docs.angularjs.org/api
  */
+
+module.exports = require('./lib/sophia');

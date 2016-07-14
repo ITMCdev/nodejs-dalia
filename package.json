@@ -20,8 +20,10 @@
     "url": "https://github.com/ITMCdev/nodejs-sophia/issues"
   },
   "homepage": "https://github.com/ITMCdev/nodejs-sophia#readme",
-  "devDependencies": {
-    "extend": "^3.0.0",
+  "dependencies": {
     "phantomjs-prebuilt": "^2.1.7"
+  },
+  "devDependencies": {
+    "assert": "^1.4.1"
   }
 }
