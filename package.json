@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/ITMCdev/nodejs-sophia#readme",
   "dependencies": {
+    "extend": "^3.0.0",
     "phantomjs-prebuilt": "^2.1.7"
   },
   "devDependencies": {
