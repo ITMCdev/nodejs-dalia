@@ -7,7 +7,7 @@ var assert = require('assert');
 //     function(err) { assert.fail(err); }
 // );
 
-sophia.parseUrls('http://www.html5rocks.com', {}, { match: /html5rocks.com/i }).then(
+sophia.parseUrls('http://www.html5rocks.com', {}, { match: /www.html5rocks.com/i })/*.then(
     function(data) { console.log(data); },
     function(err) { assert.fail(err); }
-);
+)*/;
