@@ -23,7 +23,8 @@
   "dependencies": {
     "debug-logger": "^0.4.1",
     "extend": "^3.0.0",
-    "phantomjs-prebuilt": "^2.1.7"
+    "phantomjs-prebuilt": "^2.1.7",
+    "sitemap": "^1.8.0"
   },
   "devDependencies": {
     "assert": "^1.4.1"
