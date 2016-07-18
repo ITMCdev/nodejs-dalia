@@ -12,7 +12,12 @@ var assert = require('assert');
 //     function(err) { assert.fail(err); }
 // );
 
-sophia.parseUrls('http://www.html5rocks.com', 100, { match: /html5rocks.com/i }).then(
+sophia.parseUrls('http://www.html5rocks.com', 2, { match: /html5rocks.com/i }).then(
     function(data) { console.log(data); },
     function(err) { assert.fail(err); }
 );
+
+// sophia.parseUrls('http://casacontelui.ro', 100, { match: /casacontelui.ro/i }).then(
+//     function(data) { console.log(data); },
+//     function(err) { assert.fail(err); }
+// );
