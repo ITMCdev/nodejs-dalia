@@ -21,4 +21,4 @@ notifications:
     on_start: never
 script:
     - gulp build
-    - node test/org/itmc/sophia/phantom.js
+    - mocha

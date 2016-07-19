@@ -26,7 +26,7 @@ export class Phantom {
     return new Phantom();
   }
 
-  defaultOptions = {
+  static defaultOptions = {
     phantomOptions: ["--ssl-protocol=any", "--ignore-ssl-errors=true"]
   };
 
@@ -52,7 +52,7 @@ export class Phantom {
    */
   run(url, options) {
     let self = this;
-    options = extend(true, this.defaultOptions, options);
+    options = extend(true, Phantom.defaultOptions, options);
     options.url = url;
     return new Promise(function(resolve, reject){
         var content = '';
