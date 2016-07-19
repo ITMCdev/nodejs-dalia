@@ -1,0 +1,24 @@
+sudo: required
+language: node_js
+node_js:
+  # - "6.1"
+  # - "6.0"
+  # - "5.11"
+  # - "5.5"
+  # - "5.0"
+  - "4.0"
+  # - "0.12"
+before_install:
+    - "npm install -g gulp eslint"
+install:
+    - npm install
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/12a3c7b69c03b6182e94
+    on_success: change
+    on_failure: always
+    on_start: never
+script:
+    - gulp build
+    - node test/org/itmc/sophia/phantom.js
