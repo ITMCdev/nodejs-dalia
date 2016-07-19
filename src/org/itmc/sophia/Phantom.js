@@ -1,6 +1,16 @@
 /**
+ * Sophia (SPA) SEO Tool (http://github.com/itmcdev/nodejs-sophia/)
  *
+ * Developed in collaboration with PJ Interactive Romania, a member of Brandpath UK (http://brandpath.com)
+ *
+ * @link      http://github.com/itmcdev/nodejs-sophia/ for the canonical source repository
+ * @copyright Copyright (c) 2007-2016 IT Media Connect (http://itmediaconnect.ro)
+ * @license   http://github.com/itmcdev/nodejs-sophia/LICENSE MIT License
  */
+
+var extend = require('extend');
+var path = require('path');
+var spawn = require("child_process").spawn;
 
 /**
  *
@@ -12,78 +22,57 @@ export class Phantom {
    * @method getInstance
    * @return {Phantom}
    */
-  getInstance(s) {
-    return new Phantom(s);
+  static getInstance() {
+    return new Phantom();
   }
 
-  const defaultOptions = {
-    // url: 'https://google.com',
-    selector: 'body',
-    timeout: 20000,
-    checkInterval: 200
+  defaultOptions = {
+    phantomOptions: ["--ssl-protocol=any", "--ignore-ssl-errors=true"]
   };
 
   /**
-   * Constructor.
-   * @method constructor
-   * @param  {[type]}    options [description]
-   * @return {[type]}            [description]
+   * Obtain phantom.js' executable path.
+   * @method path
+   * @return {String}
    */
-  constructor(options) {
-    this.extend = require('extend');
-    this.options = this.extend(true, this.defaultOptions, options);
-  }
-
-  exit(result, level) {
-    console.log(JSON.stringify(result));
-    phantom.exit(2);
-  }
-
-  snapshot(url, options) {
-
-    var result = [];
-    result.push({options: options});
-    result.push({log: "Creating snapshot for " + options.url + " ..." });
-
-    // https://github.com/ariya/phantomjs/issues/10930
-    page.customHeaders = { "Accept-Encoding": "identity" };
-
-    page.onError = function(msg, trace) {
-      result.push({error: msg, trace: trace});
-    };
-
-    // create the snapshot
-    page.open(options.url, function (status) {
-      if (status !== "success") {
-        output({warning: "Unable to load page " + options.url});
-        this.exit(result, 2);
-      } else {
-        // phantomJS loaded the page, so wait for it to be ready
-        waitFor(
-
-          // The test to determine readiness
-          function() { return page.evaluate(detector, { selector: options.selector, url: options.url }); },
-
-          // The onReady callback
-          function(time, result) {
-            output({content: filter(result, page.content)});
-            output({log: "Snapshot for " + options.url + " finished in " + time + " ms"});
-            output.end();
-            phantom.exit(0);
-          },
-
-          // The onTimeout callback
-          function() {
-            output({error: "Timed out waiting for " + options.selector + " to become visible for " + options.url});
-            output.end();
-            phantom.exit(1);
-          },
-
-          options.timeout,
-          options.checkInterval
-
-        );
+  path() {
+      var phantomSource = require("phantomjs-prebuilt").path;
+      if (path.extname(phantomSource).toLowerCase() === ".cmd") {
+          return path.join(path.dirname( phantomSource ), "//node_modules//phantomjs-prebuilt//lib//phantom//bin//phantomjs.exe");
       }
+      return phantomSource;
+  }
+
+  /**
+   * Run phantom.js script
+   * @method run
+   * @param  {String}  url
+   * @param  {Object}  options
+   * @return {Promise}
+   */
+  run(url, options) {
+    let self = this;
+    options = extend(true, this.defaultOptions, options);
+    options.url = url;
+    return new Promise(function(resolve, reject){
+        var content = '';
+        var args = [];
+        var key = '';
+
+        try {
+          options.phantomOptions.forEach(function(v) { args.push(v); })
+          args.push(path.join(__dirname, '_child.js'));
+          for (key in options) {
+              if (options.hasOwnProperty(key) && key != 'phantomOptions') {
+                  args.push('--' + key + '=' + options[key]);
+              }
+          }
+
+          var cp = spawn(self.path(), args);
+          cp.stdout.on('data', function(data) { content += data.toString(); });
+          cp.stderr.on("data", function(e) { reject(e) });
+          cp.on("exit", function(code) { resolve(content.replace(/(\r?\n)*$/, '')); });
+        } catch (e) { reject(e); }
     });
   }
 
