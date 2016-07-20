@@ -52,7 +52,22 @@ var defaultOptions = {
   // url: 'https://google.com',
   selector: 'body',
   timeout: 20000,
-  checkInterval: 200
+  checkInterval: 200,
+  /**
+   * [detector description]
+   * @method detector
+   * @param  {Object} options
+   * @return {Object}
+   */
+  detector: function(options) {
+    if (document.querySelectorAll(options.selector).length > 0) {
+      if (options.callback && options.callback.onDetect) {
+        return options.callback.onDetect(document);
+      }
+      return true;
+    }
+    return false;
+  }
 };
 
 /**
@@ -63,22 +78,6 @@ var defaultOptions = {
  */
 function exit(result, mode) {
   console.log(JSON.stringify(result)); phantom.exit(0);
-}
-
-/**
- * [detector description]
- * @method detector
- * @param  {Object} options
- * @return {Object}
- */
-function detector(options) {
-  if (document.querySelectorAll(options.selector).length > 0) {
-    if (options.events && options.events.onDetect) {
-      return options.events.onDetect(document);
-    }
-    return document.querySelectorAll(options.selector);
-  }
-  return false;
 }
 
 /**
@@ -107,11 +106,11 @@ function snapshot(options) {
       waitFor(
 
         // The test to determine readiness
-        function() { return page.evaluate(detector, { selector: options.selector, url: options.url }); },
+        function() { return page.evaluate(options.detector, options); },
 
         // The onReady callback
         function(time, detected) {
-          result = result.concat([{result: {/*detected: detected,*//**/ content: page.content/**/}},
+          result = result.concat([{result: {/**/detected: detected,/**//**/ content: page.content/**/}},
             {trace: "Snapshot for " + options.url + " finished in " + time + " ms"}]);
           exit(result, 0);
         },
@@ -142,6 +141,10 @@ system.args.forEach(function(arg) {
       options[match.shift()] = match.join('=');
     }
 });
+
+if (options.detector && typeof options.detector === 'string') {
+  options.detector = require(options.detector);
+}
 
 /**
  *

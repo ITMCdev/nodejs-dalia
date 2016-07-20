@@ -71,7 +71,13 @@ export class Phantom {
           var cp = spawn(self.path(), args);
           cp.stdout.on('data', function(data) { content += data.toString(); });
           cp.stderr.on("data", function(e) { reject(e) });
-          cp.on("exit", function(code) { resolve(content.replace(/(\r?\n)*$/, '')); });
+          cp.on("exit", function(code) {
+            try {
+              resolve(JSON.parse(content.replace(/(\r?\n)*$/, '')));
+            } catch (e) {
+              reject(e);
+            }
+          });
         } catch (e) { reject(e); }
     });
   }
