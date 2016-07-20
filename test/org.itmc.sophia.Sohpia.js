@@ -3,9 +3,19 @@ var assert = require('assert');
 var path = require('path');
 var Sophia = require ('../dist/org/itmc/sophia/Sophia').Sophia;
 
-(new Sophia()).indexUrls('http://html5rocks.com').then(function(data) {
-  console.log(data);
-}, function(err) { console.log(err); });
+var options = {
+  match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
+  maxDepth: 1
+  , indexMode: Sophia.INDEX_URL_MODE_RTREE
+};
+
+(new Sophia()).indexUrls('http://html5rocks.com', options)
+  .then(function(data) { console.log(data); }, function(err) { console.log(err); });
+
+// delete options.indexMode;
+//
+// (new Sophia()).indexUrls('http://html5rocks.com', options)
+//   .then(function(data) { console.log(data); }, function(err) { console.log(err); });
 
 // describe('org.itmc.sophia.Phantom', function() {
 //

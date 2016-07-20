@@ -81,6 +81,7 @@ export class Sophia {
       // index urls with queue method
       return this.indexUrlsQueued(options);
     }
+    return this.indexUrlsRTree(options);
   }
 
   /**
@@ -95,6 +96,7 @@ export class Sophia {
     return new Promise((resolve, reject) => {
       // recursive function for scanning
       (function _indexUrls(options) {
+        self.logger.trace('Queue:', JSON.stringify(options.queue));
         if (options.queue.length) {
           // scanning the first item that was added to the queue
           let cUrl = options.queue.shift();
@@ -103,6 +105,13 @@ export class Sophia {
             phantom.run(cUrl.url, options)
               // obtain page content
               .then(data => data.filter((rec) => {
+                // log all data
+                let key = null;
+                for (key in rec) {
+                  if (rec.hasOwnProperty(key) && key !== 'result') {
+                    self.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
+                  }
+                }
                 if (rec.error) { reject(rec.error); } // if rec.error, throw that error
                 return rec.result;
               }))
@@ -129,11 +138,12 @@ export class Sophia {
                   options.queue.push({ url: url, depth: cUrl.depth - 1 });
                   options.found.push(url);
                 })
-                console.log(options.found);
+                // console.log(options.found);
               })
               // continue indexing
-              // .then(data => _indexUrls(options));
+              .then(data => _indexUrls(options));
           } else {
+            self.logger.warn('Depth Exceeded:', JSON.stringify(cUrl));
             return _indexUrls(options);
           }
         } else {
@@ -141,6 +151,88 @@ export class Sophia {
         }
       })(options);
     });
+  }
+
+  /**
+   * [indexUrlsRTree description]
+   * @method indexUrlsRTree
+   * @param  {Object}  options
+   * @return {Promise}
+   */
+  indexUrlsRTree(options) {
+    let self = this;
+    let phantom = Phantom.getInstance();
+    // recursive function for scanning
+    return (function _indexUrls(cUrl, options) {
+      // create a promise to wait for the grabbing process
+      return new Promise((resolve, reject) => {
+        // call URL
+        phantom.run(cUrl.url, options)
+          // obtain page content
+          .then(data => data.filter((rec) => {
+            // log all data
+            let key = null;
+            for (key in rec) {
+              if (rec.hasOwnProperty(key) && key !== 'result') {
+                self.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
+              }
+            }
+            if (rec.error) { reject(rec.error); } // if rec.error, throw that error
+            return rec.result;
+          }))
+          .catch(err => reject(err))
+          // obtain the detecter urls
+          .then(data => {
+            return data.pop().result.detected
+          })
+          .catch(err => reject(err))
+          // filter the urls to be valid
+          .then(data => {
+            // console.log(data);
+            return data.filter(url => {
+              url = url.replace(/#.*/g, '').replace(/\/$/g, '');
+              // console.log(url, url.match(/^http(s?):\/\/.+/));
+              return self.urlValidate(url, options);
+            });
+          })
+          .catch(err => reject(err))
+          // construct recursive promises
+          .then(data => {
+            // console.log(data);
+            return data.map(url => {
+              options.found.push(url);
+              return { url: url, depth: cUrl.depth - 1 };
+            }).filter(url => { // and filter by validating depth
+              if (url.depth < 0) {
+                self.logger.warn('Depth Exceeded:', JSON.stringify(url));
+                return false;
+              }
+              return true;
+            });
+          })
+          .catch(err => reject(err))
+          // push the urls to the right variables
+          .then(data => {
+            options.ignore.push(cUrl.url);
+            // console.log(data);
+            if (data.length != 0) {
+              let promises = [];
+              data.forEach(cUrl2 => {
+                promises.push(_indexUrls(cUrl2, options));
+                Promise.all(promises).then(urlsets => {
+                  resolve(options.found);
+                }, function(err) {
+                  self.logger.error('Error: ', err);
+                });
+              });
+            } else {
+              console.log(options.found);
+              resolve(options.found);
+            }
+          })
+          .catch(err => reject(err));
+        });
+    })({url: options.url, depth: options.maxDepth}, options);
   }
 
   /**
