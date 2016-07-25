@@ -11,13 +11,14 @@
 import {Logger} from './Logger';
 import {Phantom} from './Phantom';
 
-var extend = require('extend');
-var path = require('path');
+const extend = require('extend');
+const path = require('path');
+const EventEmitter = require('events');
 
 /**
 *
 */
-export class Sophia {
+export class Sophia extends EventEmitter {
 
   static INDEX_URL_MODE_QUEUE = 0x0001;
   static INDEX_URL_MODE_RTREE = 0x0002;
@@ -30,8 +31,16 @@ export class Sophia {
     ignore: [],                         // urls to ignore during the lifetime of the parsing
     match : null,                       // RegExp => force only urls matching this regexp
     maxDepth: 5,                        // depth of url scan
-    selectors: { _default: 'body' },    // selectors for phantom-child
+    selectors: { __default: 'body' },    // selectors for phantom-child
   };
+
+  /**
+   * Singleton
+   * @return {Sophia} [description]
+   */
+  static getInstance() {
+    return new Sophia();
+  }
 
   /**
   * [constructor description]
@@ -39,13 +48,16 @@ export class Sophia {
   * @return {[type]}    [description]
   */
   constructor() {
+    super();
     /** @var {Object} */
-    this.logger = Logger.getInstance();
+    this.setLogger(Logger.getInstance());
+    /** @var {Phantom} */
+    this.setPhantom(Phantom.getInstance());
+    this.getPhantom().setLogger(this.getLogger());
   }
 
   /**
-  * Obtain used logger.
-  * @method getLogger
+  * Getter for Logger
   * @return {Object}
   */
   getLogger() {
@@ -53,21 +65,19 @@ export class Sophia {
   }
 
   /**
-  * Set used logger.
-  * @see Logger#getInstance() class.
-  * @method setLog
-  * @param  {Object} logger This should be an instance of debug-logger or a similar tool.
-  */
-  setLog(logger) {
-    this.logger = logger;
+   * Getter for Phantom
+   * @return {Phantom}
+   */
+  getPhantom() {
+    return this.phantom;
   }
 
   /**
-  * [indexUrls description]
-  * @param  {[type]} url     [description]
-  * @param  {[type]} options [description]
-  * @return {[type]}         [description]
-  */
+   * [indexUrls description]
+   * @param  {[type]} url     [description]
+   * @param  {[type]} options [description]
+   * @return {[type]}         [description]
+   */
   indexUrls(url, options = {}) {
     options = extend(true, Sophia.defaultOptions, options);
     options.url = url;
@@ -91,7 +101,6 @@ export class Sophia {
    */
   indexUrlsQueued(options) {
     let self = this;
-    let phantom = Phantom.getInstance();
     // create a promise to wait for the grabbing process
     return new Promise((resolve, reject) => {
       // recursive function for scanning
@@ -102,47 +111,22 @@ export class Sophia {
           let cUrl = options.queue.shift();
           if (cUrl.depth >= 0) {
             // call URL
-            phantom.run(cUrl.url, options)
-              // obtain page content
-              .then(data => data.filter((rec) => {
-                // log all data
-                let key = null;
-                for (key in rec) {
-                  if (rec.hasOwnProperty(key) && key !== 'result') {
-                    self.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
-                  }
-                }
-                if (rec.error) { reject(rec.error); } // if rec.error, throw that error
-                return rec.result;
-              }))
-              .catch(err => reject(err))
-              // obtain the detecter urls
+            self.phantomRun(cUrl, options, reject)
+              // push the urls to the queue
               .then(data => {
-                return data.pop().result.detected
-              })
-              .catch(err => reject(err))
-              // filter the urls to be valid
-              .then(data => {
-                // console.log(data);
-                return data.filter(url => {
-                  url = url.replace(/#.*/g, '').replace(/\/$/g, '');
-                  // console.log(url, url.match(/^http(s?):\/\/.+/));
-                  return self.urlValidate(url, options);
-                });
-              })
-              .catch(err => reject(err))
-              // push the urls to the right variables
-              .then(data => {
+                // also push current url to the ignore set
                 options.ignore.push(cUrl.url);
+                // queue
                 data.forEach(url => {
                   options.queue.push({ url: url, depth: cUrl.depth - 1 });
                   options.found.push(url);
-                })
-                // console.log(options.found);
+                });
               })
               // continue indexing
-              .then(data => _indexUrls(options));
+              .then(data => _indexUrls(options))
+              .catch(err => reject(err));
           } else {
+            // self.emit('sophia:queue:depthexceed', cUrl);
             self.logger.warn('Depth Exceeded:', JSON.stringify(cUrl));
             return _indexUrls(options);
           }
@@ -161,78 +145,110 @@ export class Sophia {
    */
   indexUrlsRTree(options) {
     let self = this;
-    let phantom = Phantom.getInstance();
-    // recursive function for scanning
-    return (function _indexUrls(cUrl, options) {
-      // create a promise to wait for the grabbing process
-      return new Promise((resolve, reject) => {
-        // call URL
-        phantom.run(cUrl.url, options)
-          // obtain page content
-          .then(data => data.filter((rec) => {
-            // log all data
-            let key = null;
-            for (key in rec) {
-              if (rec.hasOwnProperty(key) && key !== 'result') {
-                self.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
-              }
-            }
-            if (rec.error) { reject(rec.error); } // if rec.error, throw that error
-            return rec.result;
-          }))
-          .catch(err => reject(err))
-          // obtain the detecter urls
-          .then(data => {
-            return data.pop().result.detected
-          })
-          .catch(err => reject(err))
-          // filter the urls to be valid
-          .then(data => {
-            // console.log(data);
-            return data.filter(url => {
-              url = url.replace(/#.*/g, '').replace(/\/$/g, '');
-              // console.log(url, url.match(/^http(s?):\/\/.+/));
-              return self.urlValidate(url, options);
-            });
-          })
-          .catch(err => reject(err))
-          // construct recursive promises
-          .then(data => {
-            // console.log(data);
-            return data.map(url => {
-              options.found.push(url);
-              return { url: url, depth: cUrl.depth - 1 };
-            }).filter(url => { // and filter by validating depth
-              if (url.depth < 0) {
-                self.logger.warn('Depth Exceeded:', JSON.stringify(url));
-                return false;
-              }
-              return true;
-            });
-          })
-          .catch(err => reject(err))
-          // push the urls to the right variables
-          .then(data => {
-            options.ignore.push(cUrl.url);
-            // console.log(data);
-            if (data.length != 0) {
-              let promises = [];
-              data.forEach(cUrl2 => {
-                promises.push(_indexUrls(cUrl2, options));
+    return new Promise((resolvex, rejectx) => {
+      // recursive function for scanning
+      (function _indexUrls(cUrl, options) {
+        // create a promise to wait for the grabbing process
+        return new Promise((resolve, reject) => {
+          // call Url
+          self.phantomRun(cUrl, options, reject)
+            // construct recursive promises
+            .then(data => {
+              return data.map(url => {
+                options.found.push(url);
+                return { url: url, depth: cUrl.depth - 1 };
+              }).filter(url => { // and filter by validating depth
+                if (url.depth < 0) {
+                  self.logger.warn('Depth Exceeded:', JSON.stringify(url));
+                  return false;
+                }
+                return true;
+              });
+            })
+            .catch(err => reject(err))
+            // push the urls to the right variables
+            .then(data => {
+              options.ignore.push(cUrl.url);
+              if (data.length != 0) {
+                let promises = [];
+                data.forEach(cUrl2 => {
+                  promises.push(_indexUrls(cUrl2, options));
+                });
                 Promise.all(promises).then(urlsets => {
-                  resolve(options.found);
+                  // console.log(options.found);
+                  // console.log(options.found.length);
+                  resolve();
                 }, function(err) {
                   self.logger.error('Error: ', err);
                 });
-              });
-            } else {
-              console.log(options.found);
-              resolve(options.found);
+              } else {
+                // console.log(options.found);
+                // console.log(options.found.length);
+                resolve();
+              }
+            })
+            .catch(err => reject(err));
+          });
+      })({url: options.url, depth: options.maxDepth}, options)
+        .then(() => resolvex(options.found), (err) => rejectx(err));
+    });
+  }
+
+  /**
+   * Run Phantom
+   * @param  {Object}   cUrl
+   * @param  {Object}   options
+   * @param  {Function} reject
+   * @return {Promise}
+   */
+  phantomRun(cUrl, options, reject) {
+    this.emit('sophia:phantom', cUrl, options);
+    // call URL
+    return this.getPhantom()
+      .run(cUrl.url, this.phantomOptions(cUrl, options))
+      // obtain page content
+      .then((data) => {
+        this.getLogger().trace('Url', cUrl.url, 'grabbed');
+        return data.filter((rec) => {
+          // log all data
+          let key = null;
+          for (key in rec) {
+            this.emit('sophia:phantom:' + key, rec[key]);
+            if (rec.hasOwnProperty(key) && key !== 'result') {
+              this.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
             }
-          })
-          .catch(err => reject(err));
+          }
+          if (rec.error) { reject(rec.error); } // if rec.error, throw that error
+
+          return rec.result;
+        })
+      })
+      .catch(err => reject(err))
+      // obtain the detected urls
+      .then(data => {
+        return data.pop().result.detected
+      })
+      .catch(err => reject(err))
+      // filter the urls to be valid
+      .then(data => {
+        return data.filter(url => {
+          url = url.replace(/#.*/g, '').replace(/\/$/g, '');
+          return this.urlValidate(url, options);
         });
-    })({url: options.url, depth: options.maxDepth}, options);
+      })
+      .catch(err => reject(err))
+  }
+
+  /**
+   * Customize options for sending to Phantom Thread
+   * @param  {Object} options [description]
+   * @return {Object}         [description]
+   */
+  phantomOptions(cUrl, options) {
+    // cloning options to setup selector
+    let opts = extend(true, {}, options);
+    opts.selector = opts.selectors[cUrl.url] || opts.selectors.__default;
+    return opts;
   }
 
   /**
@@ -252,6 +268,23 @@ export class Sophia {
       // must not be in found list already
       && options.found.indexOf(url) < 0
       ;
+  }
+
+  /**
+   * Setter for Logger
+   * @see Logger#getInstance() class
+   * @param  {Object} logger This should be an instance of debug-logger or a similar tool.
+   */
+  setLogger(logger) {
+    this.logger = logger;
+  }
+
+  /**
+   * Setter for Phantom
+   * @param {Phantom} phantom
+   */
+  setPhantom(phantom) {
+    this.phantom = phantom;
   }
 
 }

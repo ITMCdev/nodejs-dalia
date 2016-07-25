@@ -62,7 +62,7 @@ var defaultOptions = {
   detector: function(options) {
     if (document.querySelectorAll(options.selector).length > 0) {
       if (options.callback && options.callback.onDetect) {
-        return options.callback.onDetect(document);
+        return document;
       }
       return true;
     }
@@ -138,13 +138,15 @@ system.args.forEach(function(arg) {
     var match = arg.match(/--([^=]+)=(.+)/g);
     if (match) {
       match = arg.replace('--', '').split('=');
-      options[match.shift()] = match.join('=');
+      options[match.shift()] = match.join('=').replace(/^"|"$/g, '');
     }
 });
 
 if (options.detector && typeof options.detector === 'string') {
   options.detector = require(options.detector);
 }
+
+// console.log(JSON.stringify(options));
 
 /**
  *

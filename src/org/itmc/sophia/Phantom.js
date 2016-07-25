@@ -8,14 +8,26 @@
  * @license   http://github.com/itmcdev/nodejs-sophia/LICENSE MIT License
  */
 
-var extend = require('extend');
-var path = require('path');
-var spawn = require("child_process").spawn;
+const extend = require('extend');
+const path = require('path');
+const spawn = require("child_process").spawn;
+const EventEmitter = require('events');
 
 /**
  *
  */
-export class Phantom {
+export class Phantom extends EventEmitter {
+
+  /**
+   * [constructor description]
+   * @method constructor
+   * @return {Phantom}    [description]
+   */
+  constructor() {
+    super();
+    /** @var {Object} */
+    this.logger = null;
+  }
 
   /**
    * Singleton default phantom.js instance.
@@ -29,6 +41,22 @@ export class Phantom {
   static defaultOptions = {
     phantomOptions: ["--ssl-protocol=any", "--ignore-ssl-errors=true"]
   };
+
+  /**
+   * [setLogger description]
+   * @param {[type]} logger [description]
+   */
+  setLogger(logger) {
+    this.logger = logger;
+  }
+
+  /**
+   * [getLogger description]
+   * @return {[type]} [description]
+   */
+  getLogger() {
+    return this.logger;
+  }
 
   /**
    * Obtain phantom.js' executable path.
@@ -63,11 +91,17 @@ export class Phantom {
           options.phantomOptions.forEach(function(v) { args.push(v); })
           args.push(path.join(__dirname, '_child.js'));
           for (key in options) {
-              if (options.hasOwnProperty(key) && key != 'phantomOptions') {
-                  args.push('--' + key + '=' + options[key]);
+              // @see _child.js => var defaultOptions = { ... }
+              if (options.hasOwnProperty(key) && ['selector', 'timeout', 'checkInterval', 'detector', 'url'].indexOf(key) > -1) {
+                  // args.push('--' + key + '="' + options[key] + '"');
+                  args.push('--' + key + '="' + options[key] + '"');
               }
           }
 
+          if (self.getLogger()) {
+            self.getLogger().trace('Spawning: ', self.path(), args.join(' '));
+          }
+          // console.log('Spawning: ', self.path(), args.join(' '));
           var cp = spawn(self.path(), args);
           cp.stdout.on('data', function(data) { content += data.toString(); });
           cp.stderr.on("data", function(e) { reject(e) });

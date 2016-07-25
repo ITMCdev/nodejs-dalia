@@ -5,75 +5,61 @@ var Sophia = require ('../dist/org/itmc/sophia/Sophia').Sophia;
 
 var options = {
   match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
-  maxDepth: 1
-  , indexMode: Sophia.INDEX_URL_MODE_RTREE
+  maxDepth: 1,
+  indexMode: Sophia.INDEX_URL_MODE_RTREE
 };
 
-(new Sophia()).indexUrls('http://html5rocks.com', options)
-  .then(function(data) { console.log(data); }, function(err) { console.log(err); });
-
-// delete options.indexMode;
-//
 // (new Sophia()).indexUrls('http://html5rocks.com', options)
-//   .then(function(data) { console.log(data); }, function(err) { console.log(err); });
+//   .then(function(data) { console.log(data); console.log(data.length); }, function(err) { console.log(err); });
 
-// describe('org.itmc.sophia.Phantom', function() {
-//
-//   it('should be a class', function() {
-//     assert.equal(typeof Phantom, 'function');
-//   });
-//
-//   describe('#getInstance()', function() {
-//     it('should be an object', function() {
-//       assert.equal(typeof Phantom.getInstance(), 'object');
-//     });
-//   });
-//
-//   describe('#run()', function() {
-//     // test
-//     it('should return a html content object', function(done) {
-//       this.timeout(20000);
-//       (new Phantom()).run('http://html5rocks.com').then(function(data) {
-//         var found = false;
-//         data.forEach(function(record) {
-//           if (record.result && record.result.content) {
-//             found = true;
-//             assert(record.result.content.match(/^<!DOCTYPE html>/i) !== null, 'HTML <!DOCTYPE not found...');
-//             assert(record.result.content.match(/<\/html>$/i) !== null, 'HTML </html> end tag not found...');
-//           }
-//           if (record.error) {
-//             assert.ifError(record.error);
-//           }
-//         });
-//         assert(found, 'Could not find content variable');
-//         done();
-//       },function(err) { assert.ifError(err); });
-//     });
-//     // end test
-//
-//     // test
-//     it('should return a html content object and links array', function(done) {
-//       this.timeout(20000);
-//       var options = {
-//         detector: path.join(__dirname, '../dist/org/itmc/sophia/_detector.geturls.js')
-//       };
-//       (new Phantom()).run('http://html5rocks.com', options).then(function(data) {
-//         var found = false;
-//         data.forEach(function(record) {
-//           if (record.result && record.result.content) {
-//             found = true;
-//             assert(record.result.detected.length);
-//             assert(record.result.content.match(/^<!DOCTYPE html>/i) !== null, 'HTML <!DOCTYPE not found...');
-//             assert(record.result.content.match(/<\/html>$/i) !== null, 'HTML </html> end tag not found...');
-//           }
-//           if (record.error) {
-//             assert.ifError(record.error);
-//           }
-//         });
-//         assert(found, 'Could not find content variable');
-//         done();
-//       }, function(err) { assert.ifError(err); });
-//     });
-//     // end test
-//   });
-// });
+delete options.indexMode;
+
+(new Sophia()).indexUrls('http://html5rocks.com', options)
+  .then(function(data) { console.log(data); console.log(data.length); }, function(err) { console.log(err); });
+
+var describe = describe || function(){}
+var it = it || function() {}
+
+describe('org.itmc.sophia.Sophia', function() {
+
+  it('should be a class', function() {
+    assert.equal(typeof Sophia, 'function');
+  });
+
+  describe('#getInstance()', function() {
+    it('should be an object', function() {
+      assert.equal(typeof Sophia.getInstance(), 'object');
+    });
+  });
+
+  describe('#indexUrls()', function() {
+    // test
+    it('(recursive queue) should return a list of urls', function(done) {
+      this.timeout(120000);
+      var options = {
+        match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
+        maxDepth: 1
+      };
+      (new Sophia()).indexUrls('http://html5rocks.com', options).then(function(data) {
+        assert(data.length);
+        done();
+      },function(err) { assert.ifError(err); });
+    });
+    // end test
+
+    // test
+    it('(recursive tree) should return a list of urls', function(done) {
+      this.timeout(120000);
+      var options = {
+        match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
+        maxDepth: 1,
+        indexMode: Sophia.INDEX_URL_MODE_RTREE
+      };
+      (new Sophia()).indexUrls('http://html5rocks.com', options).then(function(data) {
+        assert(data.length);
+        done();
+      },function(err) { assert.ifError(err); });
+    });
+    // end test
+  });
+});
