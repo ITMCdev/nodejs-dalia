@@ -122,6 +122,7 @@ export class Sophia extends EventEmitter {
                   options.found.push(url);
                 });
               })
+              .catch(err => reject(err))
               // continue indexing
               .then(data => _indexUrls(options))
               .catch(err => reject(err));
@@ -131,7 +132,7 @@ export class Sophia extends EventEmitter {
             return _indexUrls(options);
           }
         } else {
-          resolve(options.found);
+          resolve([...new Set(options.found)]);
         }
       })(options);
     });
@@ -154,45 +155,70 @@ export class Sophia extends EventEmitter {
           self.phantomRun(cUrl, options, reject)
             // construct recursive promises
             .then(data => {
-              return data.map(url => {
-                options.found.push(url);
-                return { url: url, depth: cUrl.depth - 1 };
-              }).filter(url => { // and filter by validating depth
-                if (url.depth < 0) {
-                  self.logger.warn('Depth Exceeded:', JSON.stringify(url));
-                  return false;
-                }
-                return true;
-              });
+              return data
+                // build url/deph structure
+                .map(url => {
+                  options.found.push(url);
+                  return { url: url, depth: cUrl.depth - 1 };
+                })
+                // filter the structures having negative depth
+                .filter(url => {
+                  if (url.depth < 0) {
+                    self.logger.warn('Depth Exceeded:', JSON.stringify(url));
+                    return false;
+                  }
+                  return true;
+                });
             })
             .catch(err => reject(err))
-            // push the urls to the right variables
+            // launch new (paralel) promises for the found urls
             .then(data => {
+              // ignore current url
               options.ignore.push(cUrl.url);
               if (data.length != 0) {
                 let promises = [];
-                data.forEach(cUrl2 => {
-                  promises.push(_indexUrls(cUrl2, options));
-                });
-                Promise.all(promises).then(urlsets => {
-                  // console.log(options.found);
-                  // console.log(options.found.length);
-                  resolve();
-                }, function(err) {
-                  self.logger.error('Error: ', err);
-                });
+                // create promises
+                data.forEach(cUrl2 => promises.push(_indexUrls(cUrl2, options)));
+                // wait for promises
+                Promise.all(promises).then(urlsets => resolve(), (err) => self.logger.error('Error: ', err));
               } else {
-                // console.log(options.found);
-                // console.log(options.found.length);
                 resolve();
               }
             })
             .catch(err => reject(err));
           });
       })({url: options.url, depth: options.maxDepth}, options)
-        .then(() => resolvex(options.found), (err) => rejectx(err));
+        .then(() => resolvex([...new Set(options.found)]), (err) => rejectx(err));
     });
   }
+
+  /**
+   * [phantomParseResult description]
+   * @param  {Array}    data   [description]
+   * @param  {Object}   cUrl   [description]
+   * @param  {Function} reject [description]
+   * @return {Array}
+   */
+  phantomParseResult(data, cUrl, reject) {
+    this.getLogger().trace('Url', cUrl.url, 'grabbed');
+    let fdata =  data.filter((rec) => {
+      // log all data
+      let key = null;
+      for (key in rec) {
+        this.emit('sophia:phantom:' + key, rec[key]);
+        if (rec.hasOwnProperty(key) && key !== 'result') {
+          this.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
+        }
+      }
+      // if (rec.error) { reject(rec.error); } // if rec.error, throw that error
+
+      return rec.result;
+    });
+    if (!fdata.length) {
+      fdata = [{result:{detected: []}}];
+    }
+    return fdata;
+  };
 
   /**
    * Run Phantom
@@ -207,33 +233,18 @@ export class Sophia extends EventEmitter {
     return this.getPhantom()
       .run(cUrl.url, this.phantomOptions(cUrl, options))
       // obtain page content
-      .then((data) => {
-        this.getLogger().trace('Url', cUrl.url, 'grabbed');
-        return data.filter((rec) => {
-          // log all data
-          let key = null;
-          for (key in rec) {
-            this.emit('sophia:phantom:' + key, rec[key]);
-            if (rec.hasOwnProperty(key) && key !== 'result') {
-              this.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
-            }
-          }
-          if (rec.error) { reject(rec.error); } // if rec.error, throw that error
-
-          return rec.result;
-        })
-      })
+      .then(data => this.phantomParseResult(data, cUrl, reject))
       .catch(err => reject(err))
       // obtain the detected urls
-      .then(data => {
-        return data.pop().result.detected
-      })
+      .then(data => data.pop().result.detected)
+      .catch(err => reject(err))
+      // clean url form
+      .then(data => data.map((url) => url = url.replace(/#.*/g, '').replace(/\/$/g, '')))
       .catch(err => reject(err))
       // filter the urls to be valid
       .then(data => {
         return data.filter(url => {
-          url = url.replace(/#.*/g, '').replace(/\/$/g, '');
-          return this.urlValidate(url, options);
+          return this.urlValidate(url, cUrl, options);
         });
       })
       .catch(err => reject(err))
@@ -257,11 +268,13 @@ export class Sophia extends EventEmitter {
    * @param  {Object}  options
    * @return {Boolean}
    */
-  urlValidate(url, options) {
+  urlValidate(url, cUrl, options) {
     return true
-      // // must be a http url
+      // compare with itself
+      && cUrl.url !== url
+      // must be a http url
       && url.match(/^http(s?):\/\/.+/) !== null
-      // // must match filter (RegExp) match
+      // must match filter (RegExp) match
       && (options.match === null || url.match(options.match))
       // must not be in ignore list
       && (!options.ignore || options.ignore.indexOf(url) < 0)

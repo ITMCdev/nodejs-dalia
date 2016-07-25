@@ -10,9 +10,13 @@
  */
 
 /**
- * for test: 
+ * for test:
  * http://aurelia.io/hub.html#/doc/api
  * https://docs.angularjs.org/api
  */
 
-module.exports = require('./lib/sophia');
+module.exports = {
+  Logger: require('./dist/org/itmc/sophia/Logger').Logger,
+  Phantom: require('./dist/org/itmc/sophia/Phantom').Phantom,
+  Sophia: require('./dist/org/itmc/sophia/Sophia').Sophia,
+};

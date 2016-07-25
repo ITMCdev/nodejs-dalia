@@ -1,6 +1,12 @@
 # nodejs-sophia
 
-## Classes
+## Overview
+
+## Getting Started
+
+## More Information
+
+## Classes Documentation
 
 ### org.itmc.sophia.Logger
 
@@ -64,9 +70,7 @@ module.exports = function(options) {
 
 ### org.itmc.sophia.Sophia
 
-
-
-## Usage
+## Usage Examples
 
 ### Creating Sitemap from Indexed Urls
 
