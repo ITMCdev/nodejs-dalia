@@ -12,6 +12,8 @@ import {Logger} from './Logger';
 import {Phantom} from './Phantom';
 
 const extend = require('extend');
+const uuid = require('uuid');
+
 const path = require('path');
 const EventEmitter = require('events');
 
@@ -29,6 +31,7 @@ export class Sophia extends EventEmitter {
     // allow a more sync parse, yet slower  or by using a tree recursive
     // algorithm which will be faster yet a possible memory eater.
     ignore: [],                         // urls to ignore during the lifetime of the parsing
+    ignoreHash: false,
     match : null,                       // RegExp => force only urls matching this regexp
     maxDepth: 5,                        // depth of url scan
     selectors: { __default: 'body' },    // selectors for phantom-child
@@ -54,6 +57,8 @@ export class Sophia extends EventEmitter {
     /** @var {Phantom} */
     this.setPhantom(Phantom.getInstance());
     this.getPhantom().setLogger(this.getLogger());
+    /** @var {Object} */
+    this.found = {};
   }
 
   /**
@@ -82,7 +87,11 @@ export class Sophia extends EventEmitter {
     options = extend(true, Sophia.defaultOptions, options);
     options.url = url;
     options.detector = path.join(__dirname, '_detector.geturls.js');
-    options.found = [url];
+    // options.found = [url];
+
+
+    options.session = uuid.v4();
+    this.found[options.session] = [url];
 
     // if we use queue method
     if (options.indexMode === Sophia.INDEX_URL_MODE_QUEUE) {
@@ -105,8 +114,8 @@ export class Sophia extends EventEmitter {
     return new Promise((resolve, reject) => {
       // recursive function for scanning
       (function _indexUrls(options) {
-        self.logger.trace('Queue:', JSON.stringify(options.queue));
-        if (options.queue.length) {
+        self.logger.trace('Queue:', JSON.stringify(options.queue), options.queue.length, 'to go');
+        if (options.queue.length > 0) {
           // scanning the first item that was added to the queue
           let cUrl = options.queue.shift();
           if (cUrl.depth >= 0) {
@@ -119,7 +128,8 @@ export class Sophia extends EventEmitter {
                 // queue
                 data.forEach(url => {
                   options.queue.push({ url: url, depth: cUrl.depth - 1 });
-                  options.found.push(url);
+                  // options.found.push(url);
+                  self.found[options.session].push(url);
                 });
               })
               .catch(err => reject(err))
@@ -132,7 +142,8 @@ export class Sophia extends EventEmitter {
             return _indexUrls(options);
           }
         } else {
-          resolve([...new Set(options.found)]);
+          // resolve([...new Set(options.found)]);
+          resolve(options.session);
         }
       })(options);
     });
@@ -158,7 +169,8 @@ export class Sophia extends EventEmitter {
               return data
                 // build url/deph structure
                 .map(url => {
-                  options.found.push(url);
+                  // options.found.push(url);this.found[options.session]
+                  self.found[options.session].push(url);
                   return { url: url, depth: cUrl.depth - 1 };
                 })
                 // filter the structures having negative depth
@@ -188,7 +200,8 @@ export class Sophia extends EventEmitter {
             .catch(err => reject(err));
           });
       })({url: options.url, depth: options.maxDepth}, options)
-        .then(() => resolvex([...new Set(options.found)]), (err) => rejectx(err));
+        // .then(() => resolvex([...new Set(options.found)]), (err) => rejectx(err));
+        .then(() => resolvex(options.session), (err) => rejectx(err));
     });
   }
 
@@ -205,7 +218,7 @@ export class Sophia extends EventEmitter {
       // log all data
       let key = null;
       for (key in rec) {
-        this.emit('sophia:phantom:' + key, rec[key]);
+        this.emit('sophia:phantom:run-' + key, rec[key]);
         if (rec.hasOwnProperty(key) && key !== 'result') {
           this.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
         }
@@ -236,15 +249,26 @@ export class Sophia extends EventEmitter {
       .then(data => this.phantomParseResult(data, cUrl, reject))
       .catch(err => reject(err))
       // obtain the detected urls
-      .then(data => data.pop().result.detected)
+      .then(data => {
+        var result = data.pop().result;
+        this.emit('sophia:phantom:result-discovered', result);
+        return result.detected;
+      })
       .catch(err => reject(err))
       // clean url form
-      .then(data => data.map((url) => url = url.replace(/#.*/g, '').replace(/\/$/g, '')))
+      .then(data => data.map((url) => {
+        var ourl = { url: url };
+        this.emit('sophia:pre:urlValidate', ourl);
+        return ourl.url;
+      }))
       .catch(err => reject(err))
       // filter the urls to be valid
       .then(data => {
         return data.filter(url => {
-          return this.urlValidate(url, cUrl, options);
+          url = this.urlValidate(url, cUrl, options);
+          let ourl = { url: url };
+          this.emit('sophia:post:urlValidate', ourl);
+          return ourl.url;
         });
       })
       .catch(err => reject(err))
@@ -279,7 +303,8 @@ export class Sophia extends EventEmitter {
       // must not be in ignore list
       && (!options.ignore || options.ignore.indexOf(url) < 0)
       // must not be in found list already
-      && options.found.indexOf(url) < 0
+      // && options.found.indexOf(url) < 0
+      && this.found[options.session].indexOf(url) < 0
       ;
   }
 

@@ -8,5 +8,11 @@ var options = {
   maxDepth: 2
 };
 
-(new Sophia()).indexUrls('http://html5rocks.com', options)
+var sophia = new Sophia();
+sophia.on('sophia:pre:urlValidate', function(ourl) {
+  ourl.url = ourl.url.replace(/#.*/g, '').replace(/\/$/g, '');
+});
+
+sophia
+  .indexUrls('http://html5rocks.com', options)
   .then(function(data) { console.log(data); console.log(data.length); }, function(err) { console.log(err); });
