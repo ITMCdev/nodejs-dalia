@@ -9,5 +9,15 @@ var options = {
   indexMode: Sophia.INDEX_URL_MODE_RTREE
 };
 
-(new Sophia()).indexUrls('http://html5rocks.com', options)
-  .then(function(data) { console.log(data); console.log(data.length); }, function(err) { console.log(err); });
+var sophia = new Sophia();
+sophia.on('sophia:pre:urlValidate', function(ourl) {
+  ourl.url = ourl.url.replace(/#.*/g, '').replace(/\/$/g, '');
+});
+
+sophia
+  .indexUrls('http://html5rocks.com', options)
+  .then(function(data) {
+    console.log(data);
+    console.log(sophia.found[data]);
+    console.log(sophia.found[data].length);
+  }, function(err) { console.log(err); });

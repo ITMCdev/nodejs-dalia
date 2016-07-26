@@ -15,4 +15,8 @@ sophia.on('sophia:pre:urlValidate', function(ourl) {
 
 sophia
   .indexUrls('http://html5rocks.com', options)
-  .then(function(data) { console.log(data); console.log(data.length); }, function(err) { console.log(err); });
+  .then(function(data) {
+    console.log(data);
+    console.log(sophia.found[data]);
+    console.log(sophia.found[data].length);
+  }, function(err) { console.log(err); });

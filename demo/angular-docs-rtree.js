@@ -5,7 +5,7 @@ console.log("To see debugging, run: export DEBUG=\"sophia:*\" before running thi
 
 var options = {
   match: /^http(s?):\/\/docs.angularjs.org/i,
-  maxDepth: 1,
+  maxDepth: 0,
   indexMode: Sophia.INDEX_URL_MODE_RTREE,
   selectors: {
     // __default: '.nav-list.naked-list'
