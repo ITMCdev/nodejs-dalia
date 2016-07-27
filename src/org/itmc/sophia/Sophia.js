@@ -171,62 +171,56 @@ export class Sophia extends EventEmitter {
        * @return {Promise}
        */
       function _indexUrls(sUrl, options) {
-        if (options.queue.length) {
-          options.queue = options.queue.filter(sqUrl => sqUrl.url != sUrl.url);
-
-          // log
-          self.logger.trace('Url: ', JSON.stringify(sUrl));
-          return self.phantomRun(sUrl, options)
-            // Construct {url:, depth:} structures with the new detected urls
-            // and filter the ones exceeding the depth, before ...
-            .then(data => data
-              .map(url => {
-                // This will also push the url to the found list
-                self.found[options.session].push(url);
-                return { url: url, depth: sUrl.depth - 1 };
-              })
-              .filter(_sUrl => {
-                if (_sUrl.depth < 0) {
-                  options.queue.push(_sUrl);
-                  self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
-                  return false;
-                }
-                return true;
-              })
-            )
-            .catch(err => Promise.reject(err))
-            // creating a set of paralel recursive calls (in order to scan them).
-            // Ofcourse, if no new url is detected, no recursive call will be created
-            // and the current call is ended.
-            // This step will also push the current scanned url to the ignore set.
-            .then(data => {
-              options.ignore.push(sUrl.url);
-              // if (options.queue.length) {
-                if (data.length != 0) {
-                  self.logger.trace('Recusrive call start for: ', JSON.stringify(data));
-                  // return Promise.all(data.map(_sUrl => _indexUrls(_sUrl, options)))
-                  //   .then(
-                  //     x => {
-                  //       self.logger.trace('Recusrive call ended for: ', JSON.stringify(data));
-                  //       options.queue = options.queue.filter(sqUrl => {
-                  //         var notFound = true;
-                  //         data.forEach(sdUrl => { if (sdUrl.url === sqUrl.url) notFound = false; });
-                  //         return notFound;
-                  //       });
-                  //     },
-                  //     e => {
-                  //       self.logger.warn('Recusrive call ended for: ', JSON.stringify(data), e.toString());
-                  //     }
-                  //   );
-                }
-              // } else {
-              //   return Promise.resolve();
-              // }
+        // log
+        self.logger.trace('Url: ', JSON.stringify(sUrl));
+        return self.phantomRun(sUrl, options)
+          // Construct {url:, depth:} structures with the new detected urls
+          // and filter the ones exceeding the depth, before ...
+          .then(data => data
+            .map(url => {
+              // This will also push the url to the found list
+              self.found[options.session].push(url);
+              return { url: url, depth: sUrl.depth - 1 };
             })
-            .catch(err => Promise.reject(err));
-        } else {
-          return Promise.resolve();
-        }
+            .filter(_sUrl => {
+              if (_sUrl.depth < 0) {
+                options.queue.push(_sUrl);
+                self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
+                return false;
+              }
+              return true;
+            })
+          )
+          .catch(err => Promise.reject(err))
+          // creating a set of paralel recursive calls (in order to scan them).
+          // Ofcourse, if no new url is detected, no recursive call will be created
+          // and the current call is ended.
+          // This step will also push the current scanned url to the ignore set.
+          .then(data => {
+            options.ignore.push(sUrl.url);
+            // if (options.queue.length) {
+              if (data.length != 0) {
+                self.logger.trace('Recusrive call start for: ', JSON.stringify(data));
+                return Promise.all(data.map(_sUrl => _indexUrls(_sUrl, options)))
+                  .then(
+                    x => {
+                      self.logger.trace('Recusrive call ended for: ', JSON.stringify(data));
+                      options.queue = options.queue.filter(sqUrl => {
+                        var notFound = true;
+                        data.forEach(sdUrl => { if (sdUrl.url === sqUrl.url) notFound = false; });
+                        return notFound;
+                      });
+                    },
+                    e => {
+                      self.logger.warn('Recusrive call ended for: ', JSON.stringify(data), e.toString());
+                    }
+                  );
+              }
+            // } else {
+            //   return Promise.resolve();
+            // }
+          })
+          .catch(err => Promise.reject(err));
       }
     )({url: options.url, depth: options.maxDepth}, options)
       .then(() => [...new Set(self.found[options.session])], (err) => self.logger.error('Error: ', err));
