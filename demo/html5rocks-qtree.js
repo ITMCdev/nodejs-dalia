@@ -6,7 +6,7 @@ console.log("To see debugging, run: export DEBUG=\"sophia:*\" before running thi
 var options = {
   match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
   maxDepth: 2,
-  indexMode: Sophia.INDEX_URL_MODE_RTREE
+  indexMode: Sophia.INDEX_URL_MODE_QTREE
 };
 
 var sophia = new Sophia();
