@@ -93,10 +93,10 @@ export class Sophia extends EventEmitter {
     options.session = uuid.v4();
     this.found[options.session] = [url];
 
+    // prepare queue
+    options.queue = [{ url: url, depth: options.maxDepth }];
     // if we use queue method
     if (options.indexMode === Sophia.INDEX_URL_MODE_QUEUE) {
-      // prepare queue
-      options.queue = [{ url: url, depth: options.maxDepth }];
       // index urls with queue method
       return this.indexUrlsQueued(options);
     }
@@ -110,39 +110,46 @@ export class Sophia extends EventEmitter {
    */
   indexUrlsQueued(options) {
     let self = this;
-      // recursive function for scanning
+    // Define a recursive function for scanning each url that is pushed in the
+    // queue.
     return (function _indexUrls(options) {
+      // log
       self.logger.trace('Queue:', JSON.stringify(options.queue), options.queue.length, 'to go');
+      // If the queue is not empty, obtain the first element from the queue (it's a LIFO queue)
+      // and start scanning its content (but only if the depth is good).
       if (options.queue.length > 0) {
-        // scanning the first item that was added to the queue
         let cUrl = options.queue.shift();
+        // log
         self.logger.trace('Url: ', JSON.stringify(cUrl));
         if (cUrl.depth >= 0) {
-          // call URL
+          // @see Sophia::phantomRun()
           return self.phantomRun(cUrl, options)
-            // push the urls to the queue
+            // Construct {url:, depth:} structures with the new detected urls
+            // and push them to the queue. Also, they will be pushed to the
+            // found list. Current url (the one that has been already scanned)
+            // will be pushed to ignore list.
             .then(data => {
-              // also push current url to the ignore set
               options.ignore.push(cUrl.url);
-              // queue
               data.forEach(url => {
                 options.queue.push({ url: url, depth: cUrl.depth - 1 });
-                // options.found.push(url);
                 self.found[options.session].push(url);
               });
             })
             .catch(err => Promise.reject(err))
-            // continue indexing
+            // Call the recursive function, in order to move processing to
+            // the next url from queue.
             .then(data => _indexUrls(options))
             .catch(err => Promise.reject(err));
         } else {
-          // self.emit('sophia:queue:depthexceed', cUrl);
+          // If an url has exceeded the depth we're searching for, just call
+          // the recursive function, in order to move processing to the next
+          // url in queue.
+          self.emit('sophia:queue:depthExceed', cUrl, options);
           self.logger.warn('Depth Exceeded:', JSON.stringify(cUrl));
           return _indexUrls(options);
         }
       } else {
-        // resolve([...new Set(options.found)]);
-        return Promise.resolve(options.session);
+        return Promise.resolve([...new Set(self.found[options.session])]);
       }
     })(options);
   }
@@ -155,46 +162,74 @@ export class Sophia extends EventEmitter {
    */
   indexUrlsRTree(options) {
     let self = this;
-    // recursive function for scanning
-    return (function _indexUrls(cUrl, options) {
-      self.logger.trace('Url: ', JSON.stringify(cUrl));
-      // call Url
-      return self.phantomRun(cUrl, options)
-        // construct recursive promises
-        .then(data => data
-          // build url/deph structure
-          .map(url => {
-            // options.found.push(url);this.found[options.session]
-            self.found[options.session].push(url);
-            return { url: url, depth: cUrl.depth - 1 };
-          })
-          // filter the structures having negative depth
-          .filter(url => {
-            if (url.depth < 0) {
-              self.logger.warn('Depth Exceeded:', JSON.stringify(url));
-              return false;
-            }
-            return true;
-          })
-        )
-        .catch(err => Promise.reject(err))
-        // launch new (paralel) promises for the found urls
-        .then(data => {
-          // ignore current url
-          options.ignore.push(cUrl.url);
-          if (data.length != 0) {
-            let promises = [];
-            // create promises
-            data.forEach(cUrl2 => promises.push(_indexUrls(cUrl2, options)));
-            // wait for promises
-            return Promise.all(promises).then(urlsets => {}, (err) => self.logger.error('Error: ', err));
-          } else {
-            return Promise.resolve();
-          }
-        })
-        .catch(err => Promise.reject(err));
-    })({url: options.url, depth: options.maxDepth}, options)
-      .then(() => options.session, (err) => self.logger.error('Error: ', err));
+    // Define a recursive function for scanning each url recursively.
+    return (
+      /**
+       * [_indexUrls description]
+       * @param  {Object} sUrl    {url:, depth: }
+       * @param  {Object} options
+       * @return {Promise}
+       */
+      function _indexUrls(sUrl, options) {
+        if (options.queue.length) {
+          options.queue = options.queue.filter(sqUrl => sqUrl.url != sUrl.url);
+
+          // log
+          self.logger.trace('Url: ', JSON.stringify(sUrl));
+          return self.phantomRun(sUrl, options)
+            // Construct {url:, depth:} structures with the new detected urls
+            // and filter the ones exceeding the depth, before ...
+            .then(data => data
+              .map(url => {
+                // This will also push the url to the found list
+                self.found[options.session].push(url);
+                return { url: url, depth: sUrl.depth - 1 };
+              })
+              .filter(_sUrl => {
+                if (_sUrl.depth < 0) {
+                  options.queue.push(_sUrl);
+                  self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
+                  return false;
+                }
+                return true;
+              })
+            )
+            .catch(err => Promise.reject(err))
+            // creating a set of paralel recursive calls (in order to scan them).
+            // Ofcourse, if no new url is detected, no recursive call will be created
+            // and the current call is ended.
+            // This step will also push the current scanned url to the ignore set.
+            .then(data => {
+              options.ignore.push(sUrl.url);
+              // if (options.queue.length) {
+                if (data.length != 0) {
+                  self.logger.trace('Recusrive call start for: ', JSON.stringify(data));
+                  // return Promise.all(data.map(_sUrl => _indexUrls(_sUrl, options)))
+                  //   .then(
+                  //     x => {
+                  //       self.logger.trace('Recusrive call ended for: ', JSON.stringify(data));
+                  //       options.queue = options.queue.filter(sqUrl => {
+                  //         var notFound = true;
+                  //         data.forEach(sdUrl => { if (sdUrl.url === sqUrl.url) notFound = false; });
+                  //         return notFound;
+                  //       });
+                  //     },
+                  //     e => {
+                  //       self.logger.warn('Recusrive call ended for: ', JSON.stringify(data), e.toString());
+                  //     }
+                  //   );
+                }
+              // } else {
+              //   return Promise.resolve();
+              // }
+            })
+            .catch(err => Promise.reject(err));
+        } else {
+          return Promise.resolve();
+        }
+      }
+    )({url: options.url, depth: options.maxDepth}, options)
+      .then(() => [...new Set(self.found[options.session])], (err) => self.logger.error('Error: ', err));
   }
 
   /**

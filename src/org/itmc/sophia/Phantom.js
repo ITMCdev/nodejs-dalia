@@ -104,7 +104,7 @@ export class Phantom extends EventEmitter {
           // console.log('Spawning: ', self.path(), args.join(' '));
           var cp = spawn(self.path(), args);
           cp.stdout.on('data', function(data) { content += data.toString(); });
-          cp.stderr.on("data", function(e) { reject(e) });
+          cp.stderr.on("data", function(err) { reject(err) });
           cp.on("exit", function(code) {
             try {
               resolve(JSON.parse(content.replace(/(\r?\n)*$/, '')));

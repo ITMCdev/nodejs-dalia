@@ -22,9 +22,9 @@ sophia.on('sophia:pre:urlValidate', function(ourl) {
 sophia
   .indexUrls('https://docs.angularjs.org/api', options)
   .then(function(data) {
-    // console.log(data); process.exit(1);
+    console.log(data);
     // data.forEach(function(url){ console.log(url); });
-    sophia.found[data].forEach(function(url){ console.log(url); });
+    // sophia.found[data].forEach(function(url){ console.log(url); });
     // console.log(data.length);
-    console.log(sophia.found[data].length);
+    // console.log(sophia.found[data].length);
   }, function(err) { console.log(err); });
