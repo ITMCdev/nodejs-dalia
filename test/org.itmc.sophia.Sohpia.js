@@ -68,5 +68,20 @@ describe('org.itmc.sophia.Sophia', function() {
       },function(err) { assert.ifError(err); });
     });
     // end test
+
+    // test
+    it('(queued recursive tree) should return a list of urls', function(done) {
+      this.timeout(120000);
+      var options = {
+        match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
+        maxDepth: 1,
+        indexMode: Sophia.INDEX_URL_MODE_QTREE
+      };
+      (new Sophia()).indexUrls('http://html5rocks.com', options).then(function(data) {
+        assert(data.length);
+        done();
+      },function(err) { assert.ifError(err); });
+    });
+    // end test
   });
 });
