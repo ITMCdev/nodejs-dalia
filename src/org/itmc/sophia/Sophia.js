@@ -120,17 +120,18 @@ export class Sophia extends EventEmitter {
       // If the queue is not empty, obtain the first element from the queue (it's a LIFO queue)
       // and start scanning its content (but only if the depth is good).
       if (options.queue.length > 0) {
+        // obtain url structure
         let cUrl = options.queue.shift();
+        // add url to ignore list
+        options.ignore.push(cUrl.url);
         // log
         self.logger.trace('Url: ', JSON.stringify(cUrl));
         if (cUrl.depth >= 0) {
           // @see Sophia::phantomRun()
           return self.phantomRun(cUrl, options)
             // Push the new constructed url structures to the queue. Also, they
-            // will be pushed to the found list. Current url (the one that has
-            // been already scanned) will be pushed to ignore list.
+            // will be pushed to the found list.
             .then(data => {
-              options.ignore.push(cUrl.url);
               data.forEach(_cUrl => {
                 options.queue.push(_cUrl);
                 self.found[options.session].push(_cUrl.url);
@@ -185,6 +186,7 @@ export class Sophia extends EventEmitter {
           let promises = null;
           if (!Array.isArray(cUrl)) {
             if (cUrl.depth >= 0) {
+              options.ignore.push(cUrl.url);
               promises = [self.phantomRun(cUrl, options)];
             } else {
               promises = [];
@@ -196,18 +198,13 @@ export class Sophia extends EventEmitter {
                 self.logger.warn('Depth Exceeded:', JSON.stringify(_cUrl));
                 return false;
               }
+              options.ignore.push(_cUrl.url);
               return true;
             }).map(_cUrl => self.phantomRun(_cUrl, options));
           }
           if (promises.length) {
             return Promise.all(promises)
               .then(data => {
-                // push current url(s) to ignore queue
-                if (!Array.isArray(cUrl)) {
-                  options.ignore.push(cUrl.url);
-                } else {
-                  cUrl.forEach(_cUrl => options.ignore.push(_cUrl.url));
-                }
                 // for each sets of _data, push the new url sets to queue
                 // and also, add the url(s) in _data to found list.
                 data.forEach(_data => {
@@ -219,6 +216,7 @@ export class Sophia extends EventEmitter {
                       urls.push(_cUrl.url);
                     }
                   });
+                  console.log(urls);
                   self.emit('sophia:phantom:partialFound', self, options, urls);
                 });
                 return data;
