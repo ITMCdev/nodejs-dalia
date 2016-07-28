@@ -18,8 +18,6 @@ sophia
   .indexUrls('http://html5rocks.com', options)
   .then(function(data) {
     data.forEach(function(url){ console.log(url); });
-    // sophia.found[data].forEach(function(url){ console.log(url); });
     console.log(data.length);
-    // console.log(sophia.found[data].length);
   }, function(err) { console.log(err); })
   .catch(function(err) { console.log(err); });

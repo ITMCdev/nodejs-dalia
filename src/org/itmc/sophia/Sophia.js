@@ -135,6 +135,9 @@ export class Sophia extends EventEmitter {
                 options.queue.push(_cUrl);
                 self.found[options.session].push(_cUrl.url);
               });
+              // emit partial found event
+              self.emit('sophia:phantom:partialFound', self, options, data.map(_cUrl => _cUrl.url));
+              return data;
             })
             // Call the recursive function, in order to move processing to
             // the next url from queue.
@@ -143,11 +146,12 @@ export class Sophia extends EventEmitter {
           // If an url has exceeded the depth we're searching for, just call
           // the recursive function, in order to move processing to the next
           // url in queue.
-          self.emit('sophia:queue:depthExceed', cUrl, options);
+          self.emit('sophia:queue:depthExceed', self, options, cUrl);
           self.logger.warn('Depth Exceeded:', JSON.stringify(cUrl));
           return _indexUrls(options);
         }
       } else {
+        self.emit('sophia:phantom:found', self, options, self.found[options.session]);
         return Promise.resolve([...new Set(self.found[options.session])].sort());
       }
     })(options);
@@ -188,7 +192,7 @@ export class Sophia extends EventEmitter {
           } else {
             promises = cUrl.filter(_cUrl => {
               if (_cUrl.depth < 0) {
-                self.emit('sophia:queue:depthExceed', _cUrl, options);
+                self.emit('sophia:queue:depthExceed', self, options, _cUrl);
                 self.logger.warn('Depth Exceeded:', JSON.stringify(_cUrl));
                 return false;
               }
@@ -208,11 +212,14 @@ export class Sophia extends EventEmitter {
                 // and also, add the url(s) in _data to found list.
                 data.forEach(_data => {
                   options.queue.push(_data);
+                  let urls = [];
                   _data.forEach(_cUrl => {
                     if (self.found[options.session].indexOf(_cUrl.url) < 0) {
                       self.found[options.session].push(_cUrl.url);
+                      urls.push(_cUrl.url);
                     }
                   });
+                  self.emit('sophia:phantom:partialFound', self, options, urls);
                 });
                 return data;
               })
@@ -223,6 +230,7 @@ export class Sophia extends EventEmitter {
             return _indexUrls(options);
           }
         } else {
+          self.emit('sophia:phantom:found', self, options, self.found[options.session]);
           return Promise.resolve([...new Set(self.found[options.session])].sort());
         }
       }
@@ -265,7 +273,7 @@ export class Sophia extends EventEmitter {
           } else {
             promises = sUrl.filter(_sUrl => {
               if (_sUrl.depth < 0) {
-                self.emit('sophia:queue:depthExceed', _sUrl, options);
+                self.emit('sophia:queue:depthExceed', self, options, _sUrl);
                 self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
                 return false;
               }
@@ -284,115 +292,30 @@ export class Sophia extends EventEmitter {
                 // for each sets of _data, push the new url sets to queue
                 // and also, add the url(s) in _data to found list.
                 return data.map(_data => {
+                  let urls = [];
                   _data.forEach(_cUrl => {
                     if (self.found[options.session].indexOf(_cUrl.url) < 0) {
                       self.found[options.session].push(_cUrl.url);
+                      urls.push(_cUrl.url);
                     }
                   });
+                  self.emit('sophia:phantom:partialFound', self, options, urls);
                   options.steps ++;
                   return _indexUrls(extend(options, {sUrl: _data}));
                 });
               })
               .then(data => Promise.all(data).then(_data => Promise.resolve([...new Set(self.found[options.session])].sort())));
+              // .then(data => Promise.all(data).then(_data => _indexUrls(extend(options, {sUrl: {url:null, depth:-1}}))));
           } else {
             return _indexUrls(extend(options, {sUrl: {url:null, depth:-1}}));
           }
         } else {
+          self.emit('sophia:phantom:found', self, options, self.found[options.session]);
           return Promise.resolve([...new Set(self.found[options.session])].sort());
         }
       }
     )(extend(options, {sUrl: { url: options.url, depth: options.maxDepth }}));
   }
-
-  // /**
-  //  * [indexUrlsRTree description]
-  //  * @method indexUrlsRTree
-  //  * @param  {Object}  options
-  //  * @return {Promise}
-  //  */
-  // indexUrlsRTree(options) {
-  //   let self = this;
-  //   options.queue = 2;
-  //   // Define a recursive function for scanning each url recursively.
-  //   return (
-  //     /**
-  //      * [_indexUrls description]
-  //      * @param  {Object} sUrl    {url: , depth: } or [{url: , depth: }, ...]
-  //      * @param  {Object} options
-  //      * @return {Promise}
-  //      */
-  //     function _indexUrls(sUrl, options) {
-  //       // log
-  //       self.logger.trace('Queue:', JSON.stringify(options.queue), options.queue.length, 'to go');
-  //       // Queue will serve only to tell when we have nothing else to scan
-  //       // if (options.queue.length) {
-  //       if (options.queue > 0) {
-  //         // Remove from queue, what we're planning to scan @ the moment
-  //         // options.queue = options.queue.filter(val => JSON.stringify(val) !== JSON.stringify(sUrl));
-  //         options.queue --;
-  //         // if sUrl is indeed a {url: , depth: } structure and not an array
-  //         // start scanning the url
-  //         if (!Array.isArray(sUrl)) {
-  //           self.logger.trace('Recusrive call started for: ', JSON.stringify(sUrl));
-  //           return self.phantomRun(sUrl, options)
-  //             // What we get from phantomRun is a set of structures which
-  //             // will be used for the recursive scan after we filter them
-  //             // for depth < 0
-  //             .then(data => {
-  //               // log
-  //               self.logger.trace('Recusrive call ended for: ', JSON.stringify(sUrl));
-  //               // push the scaned url to the ignore list
-  //               options.ignore.push(sUrl.url);
-  //               // filter depth
-  //               data = data.filter(_sUrl => {
-  //                   // mark urls as found
-  //                   self.found[options.session].push(_sUrl.url);
-  //                   // filter for depth
-  //                   if (_sUrl.depth < 0) {
-  //                     // warn
-  //                     self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
-  //                     // event handler
-  //                     self.emit('sophia:queue:depthExceed', _sUrl, options);
-  //                     return false;
-  //                   }
-  //                   return true;
-  //                 });
-  //               // push the new found array to the queue
-  //               self.logger.trace("Pushing to queue: ", JSON.stringify(data));
-  //               // increase queue
-  //               // options.queue.push(data);
-  //               options.queue ++;
-  //               // start the recursive call
-  //               return _indexUrls(data, options)
-  //             })
-  //             .catch(err => Promise.reject(err));
-  //         } else { // other create a set o paralel recursive functions to scan
-  //           // each url in the array, and wait for all to end
-  //           if (sUrl.length) {
-  //             // for each url increase queue
-  //             // sUrl.forEach(_sUrl => options.queue.push(_sUrl));
-  //             sUrl.forEach(_sUrl => options.queue ++ );
-  //             self.logger.trace('Recusrive call started for (set): ', JSON.stringify(sUrl));
-  //             return Promise.all(sUrl.map(_sUrl => _indexUrls(_sUrl, options)))
-  //               .then(
-  //                 x => self.logger.trace('Recusrive call ended for (set): ', JSON.stringify(sUrl)),
-  //                 e => self.logger.warn('Recusrive call ended for (set) (with error): ', JSON.stringify(sUrl), e.toString())
-  //               );
-  //           } else {
-  //             // return Promise.resolve();
-  //             return _indexUrls({url:'', depth:-1}, options);
-  //           }
-  //         }
-  //       } else {
-  //         return Promise.resolve();
-  //       }
-  //     }
-  //   )({url: options.url, depth: options.maxDepth}, options)
-  //     .then(
-  //       data => [...new Set(self.found[options.session])].sort(),
-  //       err => self.logger.error('Error: ', err)
-  //     );
-  // }
 
   /**
    * [phantomParseResult description]

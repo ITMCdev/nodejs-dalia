@@ -5,7 +5,7 @@ console.log("To see debugging, run: export DEBUG=\"sophia:*\" before running thi
 
 var options = {
   match: /^http(s?):\/\/docs.angularjs.org/i,
-  maxDepth: 0,
+  maxDepth: 1,
   indexMode: Sophia.INDEX_URL_MODE_RTREE,
   selectors: {
     // __default: '.nav-list.naked-list'
@@ -22,9 +22,7 @@ sophia.on('sophia:pre:urlValidate', function(ourl) {
 sophia
   .indexUrls('https://docs.angularjs.org/api', options)
   .then(function(data) {
-    console.log(data);
-    // data.forEach(function(url){ console.log(url); });
-    sophia.found[data].forEach(function(url){ console.log(url); });
-    // console.log(data.length);
-    console.log(sophia.found[data].length);
-  }, function(err) { console.log(err); });
+    data.forEach(function(url){ console.log(url); });
+    console.log(data.length);
+  }, function(err) { console.log(err); })
+  .catch(function(err) { console.log(err); });
