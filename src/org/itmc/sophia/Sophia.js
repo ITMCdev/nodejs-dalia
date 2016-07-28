@@ -27,15 +27,13 @@ export class Sophia extends EventEmitter {
   static INDEX_URL_MODE_QTREE = 0x0003;
 
   static defaultOptions = {
-    events: {},                         // events
-    indexMode: 0x0001, // urls can be indexed by using a lifo queue which should
-    // allow a more sync parse, yet slower  or by using a tree recursive
-    // algorithm which will be faster yet a possible memory eater.
+    indexMode: 0x0001,                  // urls can be indexed by using a lifo queue which should
+                                        // allow a more sync parse, yet slower  or by using a tree recursive
+                                        // algorithm which will be faster yet a possible memory eater.
     ignore: [],                         // urls to ignore during the lifetime of the parsing
-    ignoreHash: false,
     match : null,                       // RegExp => force only urls matching this regexp
     maxDepth: 5,                        // depth of url scan
-    selectors: { __default: 'body' },    // selectors for phantom-child
+    selectors: { __default: 'body' },   // selectors for phantom-child
   };
 
   /**
@@ -138,11 +136,9 @@ export class Sophia extends EventEmitter {
                 self.found[options.session].push(_cUrl.url);
               });
             })
-            .catch(err => Promise.reject(err))
             // Call the recursive function, in order to move processing to
             // the next url from queue.
-            .then(data => _indexUrls(options))
-            .catch(err => Promise.reject(err));
+            .then(data => _indexUrls(options));
         } else {
           // If an url has exceeded the depth we're searching for, just call
           // the recursive function, in order to move processing to the next
@@ -220,11 +216,9 @@ export class Sophia extends EventEmitter {
                 });
                 return data;
               })
-              .catch(err => Promise.reject(err))
               // Call the recursive function, in order to move processing to
               // the next url from queue.
-              .then(data => _indexUrls(options))
-              .catch(err => Promise.reject(err));
+              .then(data => _indexUrls(options));
           } else {
             return _indexUrls(options);
           }
@@ -289,7 +283,7 @@ export class Sophia extends EventEmitter {
                 }
                 // for each sets of _data, push the new url sets to queue
                 // and also, add the url(s) in _data to found list.
-                data = data.map(_data => {
+                return data.map(_data => {
                   _data.forEach(_cUrl => {
                     if (self.found[options.session].indexOf(_cUrl.url) < 0) {
                       self.found[options.session].push(_cUrl.url);
@@ -298,11 +292,8 @@ export class Sophia extends EventEmitter {
                   options.steps ++;
                   return _indexUrls(extend(options, {sUrl: _data}));
                 });
-                return Promise.all(data)
-                  .then(_data => Promise.resolve([...new Set(self.found[options.session])].sort()), err => Promise.reject(err))
-                  .catch(err => Promise.reject(err));
-              }, err => Promise.reject(err))
-              .catch(err => Promise.reject(err));
+              })
+              .then(data => Promise.all(data).then(_data => Promise.resolve([...new Set(self.found[options.session])].sort())));
           } else {
             return _indexUrls(extend(options, {sUrl: {url:null, depth:-1}}));
           }
@@ -441,23 +432,23 @@ export class Sophia extends EventEmitter {
     // call URL
     return this.getPhantom()
       .run(cUrl.url, this.phantomOptions(cUrl, options))
+      // .then(data => { console.log(data); return data; })
       // obtain page content
       .then(data => this.phantomParseResult(data, cUrl))
-      .catch(err => Promise.reject(err))
       // obtain the detected urls
       .then(data => {
         var result = data.pop().result;
         this.emit('sophia:phantom:result-discovered', result);
         return result.detected;
       })
-      .catch(err => Promise.reject(err))
+      // .then(data => { console.log(data); return data; })
       // clean url form
       .then(data => data.map((url) => {
         var ourl = { url: url };
         this.emit('sophia:pre:urlValidate', ourl);
         return ourl.url;
       }))
-      .catch(err => Promise.reject(err))
+      // .then(data => { console.log(data); return data; })
       // filter the urls to be valid
       .then(data => {
         return data.filter(url => {
@@ -467,10 +458,9 @@ export class Sophia extends EventEmitter {
           return ourl.url;
         });
       })
-      .catch(err => Promise.reject(err))
+      // .then(data => { console.log(data); return data; })
       // transform urls into {url: , depth: } structures
       .then(data => data.map(url => { return {url: url, depth: cUrl.depth - 1}; }))
-      .catch(err => Promise.reject(err))
   }
 
   /**
@@ -492,19 +482,24 @@ export class Sophia extends EventEmitter {
    * @return {Boolean}
    */
   urlValidate(url, cUrl, options) {
-    return true
-      // compare with itself
-      && cUrl.url !== url
-      // must be a http url
-      && url.match(/^http(s?):\/\/.+/) !== null
-      // must match filter (RegExp) match
-      && (options.match === null || url.match(options.match))
-      // must not be in ignore list
-      && (!options.ignore || options.ignore.indexOf(url) < 0)
-      // must not be in found list already
-      // && options.found.indexOf(url) < 0
-      && this.found[options.session].indexOf(url) < 0
-      ;
+    // try {
+      return true
+        // compare with itself
+        && cUrl.url !== url
+        // must be a http url
+        && url.match(/^http(s?):\/\/.+/) !== null
+        // must match filter (RegExp) match
+        && (options.match === null || url.match(options.match))
+        // must not be in ignore list
+        && (!options.ignore || options.ignore.indexOf(url) < 0)
+        // must not be in found list already
+        // && options.found.indexOf(url) < 0
+        && this.found[options.session].indexOf(url) < 0
+        ;
+    // } catch (e) {
+    //   throw e;
+    // }
+    // return false;
   }
 
   /**

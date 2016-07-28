@@ -5,7 +5,7 @@ console.log("To see debugging, run: export DEBUG=\"sophia:*\" before running thi
 
 var options = {
   match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
-  maxDepth: 1
+  maxDepth: 2
 };
 
 var sophia = new Sophia();
@@ -20,4 +20,5 @@ sophia
     // sophia.found[data].forEach(function(url){ console.log(url); });
     console.log(data.length);
     // console.log(sophia.found[data].length);
-  }, function(err) { console.log(err); });
+  }, function(err) { console.log(err); })
+  .catch(function(err) { console.log(err); });

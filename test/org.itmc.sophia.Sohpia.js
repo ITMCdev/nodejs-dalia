@@ -23,18 +23,23 @@ describe('org.itmc.sophia.Sophia', function() {
   describe('#phantomRun()', function() {
     // test
     it('should index the urls of a single page', function(done) {
-      this.timeout(120000);
-      var options = extend(true, {
+      this.timeout(5000);
+
+      var options = extend(true, Sophia.defaultOptions, {
         match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
-        maxDepth: 1
-      }, Sophia.defaultOptions);
-      var reject = function(err) { assert(err); done(); };
+        detector: path.join(__dirname, '../dist/org/itmc/sophia/_detector.geturls.js'),
+        session: 'test'
+      });
+
+      var sophia = new Sophia();
+      sophia.found = {test: []};
+
       var cUrl = {url: 'http://html5rocks.com', depth: 1};
 
-      (new Sophia()).phantomRun(cUrl, options, reject).then(function(data) {
-        assert(data.length);
+      sophia.phantomRun(cUrl, options).then(function(data) {
+        assert(data.length > 0, "Didn't get valid data.");
         done();
-      },function(err) { assert.ifError(err); });
+      }, done).catch(done);
     });
     // end test
   });
