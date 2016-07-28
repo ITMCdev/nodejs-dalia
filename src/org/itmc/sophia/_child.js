@@ -28,7 +28,7 @@ var start = new Date().getTime();
  * @param  {Number} checkInterval Interval to run test.
  * @link https://github.com/ariya/phantomjs/blob/master/examples/waitfor.js
  */
-function waitFor(testFx, onReady, onTimeout, timeout, checkInterval) {
+function waitFor(testFx, onReady, onTimeout, timeout, checkInterval, /**retry/**/) {
   var condition = false,
   interval = setInterval(function() {
     if ( (new Date().getTime() - start < timeout) && !condition ) {
@@ -38,7 +38,8 @@ function waitFor(testFx, onReady, onTimeout, timeout, checkInterval) {
       clearInterval(interval); // Stop this interval
       if ( !condition ) {
         // If condition still not fulfilled (timeout but condition is 'false')
-        onTimeout();
+        onTimeout(/**retry/**/);
+        /**waitFor(testFx, onReady, onTimeout, timeout, checkInterval, retry - 1)/**/
       } else {
         // Condition fulfilled (timeout and/or condition is 'true')
         onReady((new Date().getTime() - start), condition);
@@ -116,9 +117,13 @@ function snapshot(options) {
         },
 
         // The onTimeout callback
-        function() {
+        function(retry) {
           result.push({error: "Timed out waiting for " + options.selector + " to become visible for " + options.url});
+          /**if (retry > 0) {
+            result.push({error: 'Retrying for ' + retry + ' times.'});
+          } else {/**/
           exit(result, 1);
+          /**}/**/
         },
 
         // snapshopt timeout

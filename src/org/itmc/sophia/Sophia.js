@@ -1,12 +1,12 @@
 /**
-* Sophia (SPA) SEO Tool (http://github.com/itmcdev/nodejs-sophia/)
-*
-* Developed in collaboration with PJ Interactive Romania, a member of Brandpath UK (http://brandpath.com)
-*
-* @link      http://github.com/itmcdev/nodejs-sophia/ for the canonical source repository
-* @copyright Copyright (c) 2007-2016 IT Media Connect (http://itmediaconnect.ro)
-* @license   http://github.com/itmcdev/nodejs-sophia/LICENSE MIT License
-*/
+ * Sophia (SPA) SEO Tool (http://github.com/itmcdev/nodejs-sophia/)
+ *
+ * Developed in collaboration with PJ Interactive Romania, a member of Brandpath UK (http://brandpath.com)
+ *
+ * @link      http://github.com/itmcdev/nodejs-sophia/ for the canonical source repository
+ * @copyright Copyright (c) 2007-2016 IT Media Connect (http://itmediaconnect.ro)
+ * @license   http://github.com/itmcdev/nodejs-sophia/LICENSE MIT License
+ */
 
 import {Logger} from './Logger';
 import {Phantom} from './Phantom';
@@ -302,7 +302,7 @@ export class Sophia extends EventEmitter {
                   return _indexUrls(extend(options, {sUrl: _data}));
                 });
               })
-              .then(data => Promise.all(data).then(_data => Promise.resolve([...new Set(self.found[options.session])].sort())));
+              .then(data => Promise.all(data).then(_data => Promise.resolve([...new Set(self.found[options.session])].sort())), err => {throw err;});
               // .then(data => Promise.all(data).then(_data => _indexUrls(extend(options, {sUrl: {url:null, depth:-1}}))));
           } else {
             return _indexUrls(extend(options, {sUrl: {url:null, depth:-1}}));
