@@ -1,11 +1,11 @@
 # nodejs-sophia
 
-<!-- [![npm version](https://badge.fury.io/js/nodejs-sophia.svg)](http://badge.fury.io/js/nodejs-sophia) -->
+[![npm version](https://badge.fury.io/js/nodejs-sophia.svg)](http://badge.fury.io/js/sophia)
 [![Build Status](https://api.travis-ci.org/ITMCdev/nodejs-sophia.svg?branch=master)](http://travis-ci.org/ITMCdev/nodejs-sophia)
-<!-- [![Coverage Status](https://img.shields.io/coveralls/ITMCdev/nodejs-sophia.svg)](https://coveralls.io/r/ITMCdev/nodejs-sophia?branch=master) -->
-<!-- [![Dependency Status](https://david-dm.org/ITMCdev/nodejs-sophia.svg)](https://david-dm.org/ITMCdev/nodejs-sophia) -->
-<!-- [![devDependency Status](https://david-dm.org/ITMCdev/nodejs-sophia/dev-status.svg)](https://david-dm.org/ITMCdev/nodejs-sophia#info=devDependencies) -->
-<!-- [![Codacy Badge](https://www.codacy.com/project/badge/03d414fc2e264ef4b40456aae5b52108)](https://www.codacy.com/public/alex/nodejs-sophia) -->
+[![Coverage Status](https://img.shields.io/coveralls/ITMCdev/nodejs-sophia.svg)](https://coveralls.io/r/ITMCdev/nodejs-sophia?branch=master)
+[![Dependency Status](https://david-dm.org/ITMCdev/nodejs-sophia.svg)](https://david-dm.org/ITMCdev/nodejs-sophia)
+[![devDependency Status](https://david-dm.org/ITMCdev/nodejs-sophia/dev-status.svg)](https://david-dm.org/ITMCdev/nodejs-sophia#info=devDependencies)
+<!-- [![Codacy Badge](https://www.codacy.com/project/badge/03d414fc2e264ef4b40456aae5b52108)](https://www.codacy.com/public/ITMCdev/nodejs-sophia) -->
 
 > Tool for masive html analysis, usefull for SEO and OPA (One Page Application) indexing.
 
@@ -93,11 +93,15 @@ module.exports = function(options) {
 For version 0.1.0, Sophia would only serve as an URL indexer. This class was born out of need to index our applications'
 urls, in order to either create page snapshots, or create sitemap xml.
 
+#### Sophia's events:
+
+TODO:
+
 ## Usage Examples
 
 ### Creating Sitemap from Indexed Urls
 
-Using (sitemap)[https://www.npmjs.com/package/sitemap]
+Using (sitemap)[https://www.npmjs.com/package/sitemap], you can create your own sitemap for the website.
 
 ```javascript
 
@@ -125,7 +129,7 @@ Sophia.getInstance()
 
 ### Creating Snapshots from Indexed Urls
 
-https://www.npmjs.com/package/nodejs-sophia
+Using (html-snapshots)[https://github.com/localnerve/html-snapshots], you can also create snapshots of the entire website.
 
 ```javascript
 
@@ -152,9 +156,13 @@ Sophia.getInstance()
     });
 ```
 
-## Creating Custom Snapshots from Indexed Urls
+## Creating Custom Snapshots from Indexed Urls.
 
-https://www.npmjs.com/package/nodejs-sophia
+For Applications built in frameworks like [Aurelia](http://aurelia.io/) or [Angular](https://angularjs.org/), using
+(html-snapshots)[https://github.com/localnerve/html-snapshots], you can also create snapshots of the entire website, and use them along
+with your website for correct bot indexing.
+
+Ofcourse, you can always use the version above and `.htaccess` to do the same thing. This is only for excercise purpose.
 
 ```javascript
 
@@ -176,7 +184,30 @@ Sophia.getInstance()
             source: urls,
             outputDir: './snapshots',
             outputDirClean: true,  
-            selector: options.selectors
+            selector: options.selectors,            
+            snapshotScript: {
+                script: "customFilter",
+                module: path.join(__dirname, "myFilter.js")
+            },
         });
     });
+```
+
+#### myFilter.js
+
+Please note, this example is [Aurelia](http://aurelia.io/) only.
+
+```javascript
+module.exports = function(content) {
+  var filterVersion = "1.0-20141123";
+
+  return content
+    .replace('</body>', `<script src="jspm_packages/system.js"></script>
+    <script src="config.js"></script>
+    <script>
+    System.import('aurelia-bootstrapper');
+    </script>
+</body>`)
+    ;
+};
 ```
