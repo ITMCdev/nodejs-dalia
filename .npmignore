@@ -1,0 +1,10 @@
+.git
+.gulp
+demo
+node_modules
+src
+test
+.editoconfig
+.gitignore
+.travis.yml
+gulpfile.js

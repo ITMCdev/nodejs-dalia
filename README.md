@@ -1,10 +1,29 @@
 # nodejs-sophia
 
+<!-- [![npm version](https://badge.fury.io/js/nodejs-sophia.svg)](http://badge.fury.io/js/nodejs-sophia) -->
+[![Build Status](https://api.travis-ci.org/dragoscirjan/nodejs-sophia.svg?branch=master)](http://travis-ci.org/dragoscirjan/nodejs-sophia)
+<!-- [![Coverage Status](https://img.shields.io/coveralls/dragoscirjan/nodejs-sophia.svg)](https://coveralls.io/r/dragoscirjan/nodejs-sophia?branch=master) -->
+<!-- [![Dependency Status](https://david-dm.org/dragoscirjan/nodejs-sophia.svg)](https://david-dm.org/dragoscirjan/nodejs-sophia) -->
+<!-- [![devDependency Status](https://david-dm.org/dragoscirjan/nodejs-sophia/dev-status.svg)](https://david-dm.org/dragoscirjan/nodejs-sophia#info=devDependencies) -->
+<!-- [![Codacy Badge](https://www.codacy.com/project/badge/03d414fc2e264ef4b40456aae5b52108)](https://www.codacy.com/public/alex/nodejs-sophia) -->
+
+> Tool for masive html analysis, usefull for SEO and OPA (One Page Application) indexing.
+
 ## Overview
+
+**Sophia** is a flexible library that uses PhantomJS to index webpages served from your site. A page is only saved
+when a specified selector is detected visible in the output html. This tool is useful when your site is largely ajax
+content, or an SPA, and you want your dynamic content indexed by search engines.
+
+**Sophia** is basically a wrapper over [PhantomJS](http://phantomjs.org/), giving the user the possibility to extract
+information from the phantom call exactly as they need.
 
 ## Getting Started
 
-## More Information
+### Installation
+
+The simplest way to install *nodejs-sophia* is to use *npm*, just `npm install html-snapshots` will download
+*nodejs-sophia* and all dependencies.
 
 ## Classes Documentation
 
@@ -16,12 +35,13 @@ Logger class is derived from [debug-logger](https://www.npmjs.com/package/debug-
 const logger = require('sophia').Logger.getInstance();
 ```
 
-Please be aware, in order to see logs, you need to run:
+Please be aware, in order to see logs, you need to run `export DEBUG="sophia:*"` before running your own script. A more
+complex approach would be setting the level you wish to see, as following
 
 ```bash
 export DEBUG="sophia:level"
 ```
-in your sell where `level` is the logger directive you wish to monitor. To monitor all, use `*`.
+where `level` is the logger directive you wish to monitor. To monitor all, use `*`.
 
 ### org.itmc.sophia.Phantom
 
@@ -70,16 +90,19 @@ module.exports = function(options) {
 
 ### org.itmc.sophia.Sophia
 
+For version 0.1.0, Sophia would only serve as an URL indexer. This class was born out of need to index our applications'
+urls, in order to either create page snapshots, or create sitemap xml.
+
 ## Usage Examples
 
 ### Creating Sitemap from Indexed Urls
 
-https://www.npmjs.com/package/sitemap
+Using (sitemap)[https://www.npmjs.com/package/sitemap]
 
 ```javascript
 
 const Sophia = require('sophia');
-const sitemap = require('html-snapshots');
+const sitemap = require('nodejs-sophia');
 
 const options = {
     maxDepth: 2,
@@ -96,18 +119,18 @@ Sophia.getInstance()
             cacheTime: 600000,
             urls: urls.map(url => { url: url,  changefreq: 'daily', priority: 0.3 })
         });
-        require(fs).writeFileSync('/path/to/sitemap.xml', sitemap.toString());
+        require('fs').writeFileSync('/path/to/sitemap.xml', sitemap.toString());
     });
 ```
 
 ### Creating Snapshots from Indexed Urls
 
-https://www.npmjs.com/package/html-snapshots
+https://www.npmjs.com/package/nodejs-sophia
 
 ```javascript
 
 const Sophia = require('sophia');
-const htmlSnapshots = require('html-snapshots');
+const htmlSnapshots = require('nodejs-sophia');
 
 const options = {
     maxDepth: 2,
@@ -131,12 +154,12 @@ Sophia.getInstance()
 
 ## Creating Custom Snapshots from Indexed Urls
 
-https://www.npmjs.com/package/html-snapshots
+https://www.npmjs.com/package/nodejs-sophia
 
 ```javascript
 
 const Sophia = require('sophia');
-const htmlSnapshots = require('html-snapshots');
+const htmlSnapshots = require('nodejs-sophia');
 
 const options = {
     maxDepth: 2,

@@ -90,7 +90,7 @@ export class Sophia extends EventEmitter {
 
 
     options.session = uuid.v4();
-    this.found[options.session] = [url];
+    this.found[options.session] = [];
 
     switch (options.indexMode) {
       case Sophia.INDEX_URL_MODE_QTREE:
@@ -124,18 +124,17 @@ export class Sophia extends EventEmitter {
         let cUrl = options.queue.shift();
         // add url to ignore list
         options.ignore.push(cUrl.url);
-        // log
-        self.logger.trace('Url: ', JSON.stringify(cUrl));
+        //emit
+        self.emit('sophia:urlFound', self, options, cUrl);
+        // add url to found list
+        self.found[options.session].push(cUrl.url);
         if (cUrl.depth >= 0) {
           // @see Sophia::phantomRun()
           return self.phantomRun(cUrl, options)
             // Push the new constructed url structures to the queue. Also, they
             // will be pushed to the found list.
             .then(data => {
-              data.forEach(_cUrl => {
-                options.queue.push(_cUrl);
-                self.found[options.session].push(_cUrl.url);
-              });
+              data.forEach(_cUrl => options.queue.push(_cUrl));
               // emit partial found event
               self.emit('sophia:phantom:partialFound', self, options, data.map(_cUrl => _cUrl.url));
               return data;
@@ -152,7 +151,7 @@ export class Sophia extends EventEmitter {
           return _indexUrls(options);
         }
       } else {
-        self.emit('sophia:phantom:found', self, options, self.found[options.session]);
+        self.emit('sophia:indexedUrls', self, options, self.found[options.session]);
         return Promise.resolve([...new Set(self.found[options.session])].sort());
       }
     })(options);
@@ -186,41 +185,44 @@ export class Sophia extends EventEmitter {
           let promises = null;
           if (!Array.isArray(cUrl)) {
             if (cUrl.depth >= 0) {
+              // push url to ignore list
               options.ignore.push(cUrl.url);
+              // emit
+              self.emit('sophia:urlFound', self, options, cUrl);
+              // add url to found list
+              self.found[options.session].push(cUrl.url);
               promises = [self.phantomRun(cUrl, options)];
             } else {
+              // emit
+              self.emit('sophia:queue:depthExceed', self, options, cUrl);
+              // log
+              self.logger.warn('Depth Exceeded:', JSON.stringify(cUrl));
               promises = [];
             }
           } else {
             promises = cUrl.filter(_cUrl => {
+              // push url to ignore list
+              options.ignore.push(_cUrl.url);
+              // emit
+              self.emit('sophia:urlFound', self, options, _cUrl);
+              // add url to found list
+              self.found[options.session].push(_cUrl.url);
+              // depth check
               if (_cUrl.depth < 0) {
+                // emit
                 self.emit('sophia:queue:depthExceed', self, options, _cUrl);
+                // log
                 self.logger.warn('Depth Exceeded:', JSON.stringify(_cUrl));
                 return false;
               }
-              options.ignore.push(_cUrl.url);
               return true;
             }).map(_cUrl => self.phantomRun(_cUrl, options));
           }
           if (promises.length) {
             return Promise.all(promises)
-              .then(data => {
-                // for each sets of _data, push the new url sets to queue
-                // and also, add the url(s) in _data to found list.
-                data.forEach(_data => {
-                  options.queue.push(_data);
-                  let urls = [];
-                  _data.forEach(_cUrl => {
-                    if (self.found[options.session].indexOf(_cUrl.url) < 0) {
-                      self.found[options.session].push(_cUrl.url);
-                      urls.push(_cUrl.url);
-                    }
-                  });
-                  console.log(urls);
-                  self.emit('sophia:phantom:partialFound', self, options, urls);
-                });
-                return data;
-              })
+              // for each sets of _data, push the new url sets to queue
+              // and also, add the url(s) in _data to found list.
+              .then(data => data.forEach(_data => options.queue.push(_data)))
               // Call the recursive function, in order to move processing to
               // the next url from queue.
               .then(data => _indexUrls(options));
@@ -264,14 +266,35 @@ export class Sophia extends EventEmitter {
           //
           if (!Array.isArray(options.sUrl)) {
             if (sUrl.depth >= 0) {
+              // push url to ignore list
+              options.ignore.push(sUrl.url);
+              // emit
+              self.emit('sophia:urlFound', self, options, sUrl);
+              // add url to found list
+              self.found[options.session].push(sUrl.url);
+              // create prommise list
               promises = [self.phantomRun(sUrl, options)];
             } else {
+              // emit
+              self.emit('sophia:queue:depthExceed', self, options, sUrl);
+              // log
+              self.logger.warn('Depth Exceeded:', JSON.stringify(sUrl));
               promises = [];
             }
           } else {
+            // filter found url by depth and create prommise list
             promises = sUrl.filter(_sUrl => {
+              // push url to ignore list
+              options.ignore.push(_sUrl.url);
+              // emit
+              self.emit('sophia:urlFound', self, options, _sUrl);
+              // add url to found list
+              self.found[options.session].push(_sUrl.url);
+              // depth condition
               if (_sUrl.depth < 0) {
+                // emit
                 self.emit('sophia:queue:depthExceed', self, options, _sUrl);
+                // log
                 self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
                 return false;
               }
@@ -281,23 +304,9 @@ export class Sophia extends EventEmitter {
           if (promises.length) {
             return Promise.all(promises)
               .then(data => {
-                // push current url(s) to ignore queue
-                if (!Array.isArray(sUrl)) {
-                  options.ignore.push(sUrl.url);
-                } else {
-                  sUrl.forEach(_sUrl => options.ignore.push(_sUrl.url));
-                }
                 // for each sets of _data, push the new url sets to queue
                 // and also, add the url(s) in _data to found list.
                 return data.map(_data => {
-                  let urls = [];
-                  _data.forEach(_cUrl => {
-                    if (self.found[options.session].indexOf(_cUrl.url) < 0) {
-                      self.found[options.session].push(_cUrl.url);
-                      urls.push(_cUrl.url);
-                    }
-                  });
-                  self.emit('sophia:phantom:partialFound', self, options, urls);
                   options.steps ++;
                   return _indexUrls(extend(options, {sUrl: _data}));
                 });
@@ -359,14 +368,14 @@ export class Sophia extends EventEmitter {
       // obtain the detected urls
       .then(data => {
         var result = data.pop().result;
-        this.emit('sophia:phantom:result-discovered', result);
+        this.emit('sophia:phantom:resultDiscovered', this, options, cUrl, result);
         return result.detected;
       })
       // .then(data => { console.log(data); return data; })
       // clean url form
       .then(data => data.map((url) => {
         var ourl = { url: url };
-        this.emit('sophia:pre:urlValidate', ourl);
+        this.emit('sophia:pre:urlValidate', this, options, ourl);
         return ourl.url;
       }))
       // .then(data => { console.log(data); return data; })
@@ -375,7 +384,7 @@ export class Sophia extends EventEmitter {
         return data.filter(url => {
           url = this.urlValidate(url, cUrl, options);
           let ourl = { url: url };
-          this.emit('sophia:post:urlValidate', ourl);
+          this.emit('sophia:post:urlValidate', this, options, ourl);
           return ourl.url;
         });
       })

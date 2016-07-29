@@ -14,7 +14,7 @@ var options = {
 
 var sophia = new Sophia();
 
-sophia.on('sophia:pre:urlValidate', function(ourl) {
+sophia.on('sophia:pre:urlValidate', function(self, options, ourl) {
   ourl.url = ourl.url.replace(/#.*/g, '').replace(/\/$/g, '');
 });
 
@@ -23,5 +23,5 @@ sophia
   .then(function(data) {
     data.forEach(function(url){ console.log(url); });
     console.log(data.length);
-  }, function(err) { console.log(err); })
-  .catch(function(err) { console.log(err); });
+  }, function(err) { console.log(err.toString()); })
+  .catch(function(err) { console.log(err.toString()); });

@@ -9,7 +9,7 @@ var options = {
 };
 
 var sophia = new Sophia();
-sophia.on('sophia:pre:urlValidate', function(ourl) {
+sophia.on('sophia:pre:urlValidate', function(self, options, ourl) {
   ourl.url = ourl.url.replace(/#.*/g, '').replace(/\/$/g, '');
 });
 
