@@ -2,11 +2,11 @@
 var assert = require('assert');
 var Logger = require('../index').Logger;
 var Phantom = require('../index').Phantom;
-var Sophia = require('../index').Sophia;
+var Dalia = require('../index').Dalia;
 
-describe('require("sophia")', function() {
+describe('require("dalia")', function() {
 
-  describe('require("sophia").Logger', function() {
+  describe('require("dalia").Logger', function() {
     // test
     it('should exist', function() {
       assert.equal(typeof Logger, 'function');
@@ -20,7 +20,7 @@ describe('require("sophia")', function() {
     // end test
   });
 
-  describe('require("sophia").Phantom', function() {
+  describe('require("dalia").Phantom', function() {
     // test
     it('should exist', function() {
       assert.equal(typeof Phantom, 'function');
@@ -34,16 +34,16 @@ describe('require("sophia")', function() {
     // end test
   });
 
-  describe('require("sophia").Sophia', function() {
+  describe('require("dalia").Dalia', function() {
     // test
     it('should exist', function() {
-      assert.equal(typeof Sophia, 'function');
+      assert.equal(typeof Dalia, 'function');
     });
     // end test
 
     // test
     it('should instantiate an object', function() {
-      assert.equal(typeof Sophia.getInstance(), 'object');
+      assert.equal(typeof Dalia.getInstance(), 'object');
     });
     // end test
   });

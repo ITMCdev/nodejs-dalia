@@ -1,5 +1,5 @@
 {
-  "name": "sophia",
+  "name": "dalia",
   "version": "0.0.1",
   "description": "SEO Tool for SPA and not only",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ITMCdev/nodejs-sophia.git"
+    "url": "git+https://github.com/ITMCdev/nodejs-dalia.git"
   },
   "keywords": [
     "spa",
@@ -17,9 +17,9 @@
   "author": "Dragos Cirjan <dragosc.cirjan@itmediaconnect.ro>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ITMCdev/nodejs-sophia/issues"
+    "url": "https://github.com/ITMCdev/nodejs-dalia/issues"
   },
-  "homepage": "https://github.com/ITMCdev/nodejs-sophia#readme",
+  "homepage": "https://github.com/ITMCdev/nodejs-dalia#readme",
   "dependencies": {
     "debug-logger": "^0.4.1",
     "extend": "^3.0.0",

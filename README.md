@@ -1,54 +1,54 @@
-# nodejs-sophia
+# nodejs-dalia
 
-[![npm version](https://badge.fury.io/js/nodejs-sophia.svg)](http://badge.fury.io/js/sophia)
-[![Build Status](https://api.travis-ci.org/ITMCdev/nodejs-sophia.svg?branch=master)](http://travis-ci.org/ITMCdev/nodejs-sophia)
-[![Coverage Status](https://img.shields.io/coveralls/ITMCdev/nodejs-sophia.svg)](https://coveralls.io/r/ITMCdev/nodejs-sophia?branch=master)
-[![Dependency Status](https://david-dm.org/ITMCdev/nodejs-sophia.svg)](https://david-dm.org/ITMCdev/nodejs-sophia)
-[![devDependency Status](https://david-dm.org/ITMCdev/nodejs-sophia/dev-status.svg)](https://david-dm.org/ITMCdev/nodejs-sophia#info=devDependencies)
-<!-- [![Codacy Badge](https://www.codacy.com/project/badge/03d414fc2e264ef4b40456aae5b52108)](https://www.codacy.com/public/ITMCdev/nodejs-sophia) -->
+[![npm version](https://badge.fury.io/js/nodejs-dalia.svg)](http://badge.fury.io/js/dalia)
+[![Build Status](https://api.travis-ci.org/ITMCdev/nodejs-dalia.svg?branch=master)](http://travis-ci.org/ITMCdev/nodejs-dalia)
+[![Coverage Status](https://img.shields.io/coveralls/ITMCdev/nodejs-dalia.svg)](https://coveralls.io/r/ITMCdev/nodejs-dalia?branch=master)
+[![Dependency Status](https://david-dm.org/ITMCdev/nodejs-dalia.svg)](https://david-dm.org/ITMCdev/nodejs-dalia)
+[![devDependency Status](https://david-dm.org/ITMCdev/nodejs-dalia/dev-status.svg)](https://david-dm.org/ITMCdev/nodejs-dalia#info=devDependencies)
+<!-- [![Codacy Badge](https://www.codacy.com/project/badge/03d414fc2e264ef4b40456aae5b52108)](https://www.codacy.com/public/ITMCdev/nodejs-dalia) -->
 
 > Tool for masive html analysis, usefull for SEO and OPA (One Page Application) indexing.
 
 ## Overview
 
-**Sophia** is a flexible library that uses PhantomJS to index webpages served from your site. A page is only saved
+**Dalia** is a flexible library that uses PhantomJS to index webpages served from your site. A page is only saved
 when a specified selector is detected visible in the output html. This tool is useful when your site is largely ajax
 content, or an SPA, and you want your dynamic content indexed by search engines.
 
-**Sophia** is basically a wrapper over [PhantomJS](http://phantomjs.org/), giving the user the possibility to extract
+**Dalia** is basically a wrapper over [PhantomJS](http://phantomjs.org/), giving the user the possibility to extract
 information from the phantom call exactly as they need.
 
 ## Getting Started
 
 ### Installation
 
-The simplest way to install *nodejs-sophia* is to use *npm*, just `npm install html-snapshots` will download
-*nodejs-sophia* and all dependencies.
+The simplest way to install *nodejs-dalia* is to use *npm*, just `npm install html-snapshots` will download
+*nodejs-dalia* and all dependencies.
 
 ## Classes Documentation
 
-### org.itmc.sophia.Logger
+### org.itmc.dalia.Logger
 
 Logger class is derived from [debug-logger](https://www.npmjs.com/package/debug-logger) package, only instantiating it:
 
 ```javascript
-const logger = require('sophia').Logger.getInstance();
+const logger = require('dalia').Logger.getInstance();
 ```
 
-Please be aware, in order to see logs, you need to run `export DEBUG="sophia:*"` before running your own script. A more
+Please be aware, in order to see logs, you need to run `export DEBUG="dalia:*"` before running your own script. A more
 complex approach would be setting the level you wish to see, as following
 
 ```bash
-export DEBUG="sophia:level"
+export DEBUG="dalia:level"
 ```
 where `level` is the logger directive you wish to monitor. To monitor all, use `*`.
 
-### org.itmc.sophia.Phantom
+### org.itmc.dalia.Phantom
 
 Phantom is a simple instantiator for phantomjs, in order to catch the result of phantomjs and work with it further:
 
 ```javascript
-const phantom = require('sophia').Phantom.getInstance();
+const phantom = require('dalia').Phantom.getInstance();
 phantom.run('http://html5rocks.com')
     .then((data) => { console.log(data) });
 ```
@@ -88,12 +88,12 @@ module.exports = function(options) {
 // ...
 ```
 
-### org.itmc.sophia.Sophia
+### org.itmc.dalia.Dalia
 
-For version 0.1.0, Sophia would only serve as an URL indexer. This class was born out of need to index our applications'
+For version 0.1.0, Dalia would only serve as an URL indexer. This class was born out of need to index our applications'
 urls, in order to either create page snapshots, or create sitemap xml.
 
-#### Sophia's events:
+#### Dalia's events:
 
 TODO:
 
@@ -105,8 +105,8 @@ Using (sitemap)[https://www.npmjs.com/package/sitemap], you can create your own 
 
 ```javascript
 
-const Sophia = require('sophia');
-const sitemap = require('nodejs-sophia');
+const Dalia = require('dalia');
+const sitemap = require('nodejs-dalia');
 
 const options = {
     maxDepth: 2,
@@ -115,7 +115,7 @@ const options = {
     }
 };
 
-Sophia.getInstance()
+Dalia.getInstance()
     .indexUrls('http://html5rocks.com', options)
     .then((urls) => {
         let sitemap = sm.createSitemap ({
@@ -133,8 +133,8 @@ Using (html-snapshots)[https://github.com/localnerve/html-snapshots], you can al
 
 ```javascript
 
-const Sophia = require('sophia');
-const htmlSnapshots = require('nodejs-sophia');
+const Dalia = require('dalia');
+const htmlSnapshots = require('nodejs-dalia');
 
 const options = {
     maxDepth: 2,
@@ -143,7 +143,7 @@ const options = {
     }
 };
 
-Sophia.getInstance()
+Dalia.getInstance()
     .indexUrls('http://html5rocks.com', options)
     .then((urls) => {
         var result = htmlSnapshots.run({
@@ -166,8 +166,8 @@ Ofcourse, you can always use the version above and `.htaccess` to do the same th
 
 ```javascript
 
-const Sophia = require('sophia');
-const htmlSnapshots = require('nodejs-sophia');
+const Dalia = require('dalia');
+const htmlSnapshots = require('nodejs-dalia');
 
 const options = {
     maxDepth: 2,
@@ -176,7 +176,7 @@ const options = {
     }
 };
 
-Sophia.getInstance()
+Dalia.getInstance()
     .indexUrls('http://html5rocks.com', options)
     .then((urls) => {
         var result = htmlSnapshots.run({

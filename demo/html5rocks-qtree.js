@@ -1,20 +1,20 @@
 
-var Sophia = require('../index').Sophia;
+var Dalia = require('../index').Dalia;
 
-console.log("To see debugging, run: export DEBUG=\"sophia:*\" before running this script.");
+console.log("To see debugging, run: export DEBUG=\"dalia:*\" before running this script.");
 
 var options = {
   match: /^http(s?):\/\/(www|updates).html5rocks.com/i,
   maxDepth: 2,
-  indexMode: Sophia.INDEX_URL_MODE_QTREE
+  indexMode: Dalia.INDEX_URL_MODE_QTREE
 };
 
-var sophia = new Sophia();
-sophia.on('sophia:pre:urlValidate', function(self, options, ourl) {
+var dalia = new Dalia();
+dalia.on('dalia:pre:urlValidate', function(self, options, ourl) {
   ourl.url = ourl.url.replace(/#.*/g, '').replace(/\/$/g, '');
 });
 
-sophia
+dalia
   .indexUrls('http://html5rocks.com', options)
   .then(function(data) {
     data.forEach(function(url){ console.log(url); });

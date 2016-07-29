@@ -16,7 +16,7 @@
  */
 
 module.exports = {
-  Logger: require('./dist/org/itmc/sophia/Logger').Logger,
-  Phantom: require('./dist/org/itmc/sophia/Phantom').Phantom,
-  Sophia: require('./dist/org/itmc/sophia/Sophia').Sophia,
+  Logger: require('./dist/org/itmc/dalia/Logger').Logger,
+  Phantom: require('./dist/org/itmc/dalia/Phantom').Phantom,
+  Dalia: require('./dist/org/itmc/dalia/Dalia').Dalia,
 };

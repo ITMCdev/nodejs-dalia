@@ -1,11 +1,11 @@
 /**
- * Sophia (SPA) SEO Tool (http://github.com/itmcdev/nodejs-sophia/)
+ * Dalia (SPA) SEO Tool (http://github.com/itmcdev/nodejs-dalia/)
  *
  * Developed in collaboration with PJ Interactive Romania, a member of Brandpath UK (http://brandpath.com)
  *
- * @link      http://github.com/itmcdev/nodejs-sophia/ for the canonical source repository
+ * @link      http://github.com/itmcdev/nodejs-dalia/ for the canonical source repository
  * @copyright Copyright (c) 2007-2016 IT Media Connect (http://itmediaconnect.ro)
- * @license   http://github.com/itmcdev/nodejs-sophia/LICENSE MIT License
+ * @license   http://github.com/itmcdev/nodejs-dalia/LICENSE MIT License
  */
 
 import {Logger} from './Logger';
@@ -20,7 +20,7 @@ const EventEmitter = require('events');
 /**
 *
 */
-export class Sophia extends EventEmitter {
+export class Dalia extends EventEmitter {
 
   static INDEX_URL_MODE_QUEUE = 0x0001;
   static INDEX_URL_MODE_RTREE = 0x0002;
@@ -38,10 +38,10 @@ export class Sophia extends EventEmitter {
 
   /**
    * Singleton
-   * @return {Sophia} [description]
+   * @return {Dalia} [description]
    */
   static getInstance() {
-    return new Sophia();
+    return new Dalia();
   }
 
   /**
@@ -83,7 +83,7 @@ export class Sophia extends EventEmitter {
    * @return {[type]}         [description]
    */
   indexUrls(url, options = {}) {
-    options = extend(true, Sophia.defaultOptions, options);
+    options = extend(true, Dalia.defaultOptions, options);
     options.url = url;
     options.detector = path.join(__dirname, '_detector.geturls.js');
     // options.found = [url];
@@ -93,9 +93,9 @@ export class Sophia extends EventEmitter {
     this.found[options.session] = [];
 
     switch (options.indexMode) {
-      case Sophia.INDEX_URL_MODE_QTREE:
+      case Dalia.INDEX_URL_MODE_QTREE:
         return this.indexUrlsQTree(options);
-      case Sophia.INDEX_URL_MODE_RTREE:
+      case Dalia.INDEX_URL_MODE_RTREE:
         return this.indexUrlsRTree(options);
       default:
         return this.indexUrlsQueued(options);
@@ -125,18 +125,18 @@ export class Sophia extends EventEmitter {
         // add url to ignore list
         options.ignore.push(cUrl.url);
         //emit
-        self.emit('sophia:urlFound', self, options, cUrl);
+        self.emit('dalia:urlFound', self, options, cUrl);
         // add url to found list
         self.found[options.session].push(cUrl.url);
         if (cUrl.depth >= 0) {
-          // @see Sophia::phantomRun()
+          // @see Dalia::phantomRun()
           return self.phantomRun(cUrl, options)
             // Push the new constructed url structures to the queue. Also, they
             // will be pushed to the found list.
             .then(data => {
               data.forEach(_cUrl => options.queue.push(_cUrl));
               // emit partial found event
-              self.emit('sophia:phantom:partialFound', self, options, data.map(_cUrl => _cUrl.url));
+              self.emit('dalia:phantom:partialFound', self, options, data.map(_cUrl => _cUrl.url));
               return data;
             })
             // Call the recursive function, in order to move processing to
@@ -146,12 +146,12 @@ export class Sophia extends EventEmitter {
           // If an url has exceeded the depth we're searching for, just call
           // the recursive function, in order to move processing to the next
           // url in queue.
-          self.emit('sophia:queue:depthExceed', self, options, cUrl);
+          self.emit('dalia:queue:depthExceed', self, options, cUrl);
           self.logger.warn('Depth Exceeded:', JSON.stringify(cUrl));
           return _indexUrls(options);
         }
       } else {
-        self.emit('sophia:indexedUrls', self, options, self.found[options.session]);
+        self.emit('dalia:indexedUrls', self, options, self.found[options.session]);
         return Promise.resolve([...new Set(self.found[options.session])].sort());
       }
     })(options);
@@ -188,13 +188,13 @@ export class Sophia extends EventEmitter {
               // push url to ignore list
               options.ignore.push(cUrl.url);
               // emit
-              self.emit('sophia:urlFound', self, options, cUrl);
+              self.emit('dalia:urlFound', self, options, cUrl);
               // add url to found list
               self.found[options.session].push(cUrl.url);
               promises = [self.phantomRun(cUrl, options)];
             } else {
               // emit
-              self.emit('sophia:queue:depthExceed', self, options, cUrl);
+              self.emit('dalia:queue:depthExceed', self, options, cUrl);
               // log
               self.logger.warn('Depth Exceeded:', JSON.stringify(cUrl));
               promises = [];
@@ -204,13 +204,13 @@ export class Sophia extends EventEmitter {
               // push url to ignore list
               options.ignore.push(_cUrl.url);
               // emit
-              self.emit('sophia:urlFound', self, options, _cUrl);
+              self.emit('dalia:urlFound', self, options, _cUrl);
               // add url to found list
               self.found[options.session].push(_cUrl.url);
               // depth check
               if (_cUrl.depth < 0) {
                 // emit
-                self.emit('sophia:queue:depthExceed', self, options, _cUrl);
+                self.emit('dalia:queue:depthExceed', self, options, _cUrl);
                 // log
                 self.logger.warn('Depth Exceeded:', JSON.stringify(_cUrl));
                 return false;
@@ -230,7 +230,7 @@ export class Sophia extends EventEmitter {
             return _indexUrls(options);
           }
         } else {
-          self.emit('sophia:phantom:found', self, options, self.found[options.session]);
+          self.emit('dalia:phantom:found', self, options, self.found[options.session]);
           return Promise.resolve([...new Set(self.found[options.session])].sort());
         }
       }
@@ -269,14 +269,14 @@ export class Sophia extends EventEmitter {
               // push url to ignore list
               options.ignore.push(sUrl.url);
               // emit
-              self.emit('sophia:urlFound', self, options, sUrl);
+              self.emit('dalia:urlFound', self, options, sUrl);
               // add url to found list
               self.found[options.session].push(sUrl.url);
               // create prommise list
               promises = [self.phantomRun(sUrl, options)];
             } else {
               // emit
-              self.emit('sophia:queue:depthExceed', self, options, sUrl);
+              self.emit('dalia:queue:depthExceed', self, options, sUrl);
               // log
               self.logger.warn('Depth Exceeded:', JSON.stringify(sUrl));
               promises = [];
@@ -287,13 +287,13 @@ export class Sophia extends EventEmitter {
               // push url to ignore list
               options.ignore.push(_sUrl.url);
               // emit
-              self.emit('sophia:urlFound', self, options, _sUrl);
+              self.emit('dalia:urlFound', self, options, _sUrl);
               // add url to found list
               self.found[options.session].push(_sUrl.url);
               // depth condition
               if (_sUrl.depth < 0) {
                 // emit
-                self.emit('sophia:queue:depthExceed', self, options, _sUrl);
+                self.emit('dalia:queue:depthExceed', self, options, _sUrl);
                 // log
                 self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
                 return false;
@@ -317,7 +317,7 @@ export class Sophia extends EventEmitter {
             return _indexUrls(extend(options, {sUrl: {url:null, depth:-1}}));
           }
         } else {
-          self.emit('sophia:phantom:found', self, options, self.found[options.session]);
+          self.emit('dalia:phantom:found', self, options, self.found[options.session]);
           return Promise.resolve([...new Set(self.found[options.session])].sort());
         }
       }
@@ -336,7 +336,7 @@ export class Sophia extends EventEmitter {
       // log all data
       let key = null;
       for (key in rec) {
-        this.emit('sophia:phantom:run-' + key, rec[key]);
+        this.emit('dalia:phantom:run-' + key, rec[key]);
         if (rec.hasOwnProperty(key) && key !== 'result') {
           this.logger[key]((typeof rec[key] !== 'string') ? JSON.stringify(rec[key]) : rec[key]);
         }
@@ -358,7 +358,7 @@ export class Sophia extends EventEmitter {
    * @return {Promise}
    */
   phantomRun(cUrl, options) {
-    this.emit('sophia:phantom', cUrl, options);
+    this.emit('dalia:phantom', cUrl, options);
     // call URL
     return this.getPhantom()
       .run(cUrl.url, this.phantomOptions(cUrl, options))
@@ -368,14 +368,14 @@ export class Sophia extends EventEmitter {
       // obtain the detected urls
       .then(data => {
         var result = data.pop().result;
-        this.emit('sophia:phantom:resultDiscovered', this, options, cUrl, result);
+        this.emit('dalia:phantom:resultDiscovered', this, options, cUrl, result);
         return result.detected;
       })
       // .then(data => { console.log(data); return data; })
       // clean url form
       .then(data => data.map((url) => {
         var ourl = { url: url };
-        this.emit('sophia:pre:urlValidate', this, options, ourl);
+        this.emit('dalia:pre:urlValidate', this, options, ourl);
         return ourl.url;
       }))
       // .then(data => { console.log(data); return data; })
@@ -384,7 +384,7 @@ export class Sophia extends EventEmitter {
         return data.filter(url => {
           url = this.urlValidate(url, cUrl, options);
           let ourl = { url: url };
-          this.emit('sophia:post:urlValidate', this, options, ourl);
+          this.emit('dalia:post:urlValidate', this, options, ourl);
           return ourl.url;
         });
       })

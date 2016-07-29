@@ -1,9 +1,9 @@
 
 var assert = require('assert');
 var path = require('path');
-var Phantom = require ('../dist/org/itmc/sophia/Phantom').Phantom;
+var Phantom = require ('../dist/org/itmc/dalia/Phantom').Phantom;
 
-describe('org.itmc.sophia.Phantom', function() {
+describe('org.itmc.dalia.Phantom', function() {
 
   it('should be a class', function() {
     assert.equal(typeof Phantom, 'function');
@@ -41,7 +41,7 @@ describe('org.itmc.sophia.Phantom', function() {
     it('should return a html content object and links array', function(done) {
       this.timeout(20000);
       var options = {
-        detector: path.join(__dirname, '../dist/org/itmc/sophia/_detector.geturls.js')
+        detector: path.join(__dirname, '../dist/org/itmc/dalia/_detector.geturls.js')
       };
       (new Phantom()).run('http://html5rocks.com', options).then(function(data) {
         var found = false;
