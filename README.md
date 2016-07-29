@@ -1,10 +1,10 @@
 # nodejs-sophia
 
 <!-- [![npm version](https://badge.fury.io/js/nodejs-sophia.svg)](http://badge.fury.io/js/nodejs-sophia) -->
-[![Build Status](https://api.travis-ci.org/dragoscirjan/nodejs-sophia.svg?branch=master)](http://travis-ci.org/dragoscirjan/nodejs-sophia)
-<!-- [![Coverage Status](https://img.shields.io/coveralls/dragoscirjan/nodejs-sophia.svg)](https://coveralls.io/r/dragoscirjan/nodejs-sophia?branch=master) -->
-<!-- [![Dependency Status](https://david-dm.org/dragoscirjan/nodejs-sophia.svg)](https://david-dm.org/dragoscirjan/nodejs-sophia) -->
-<!-- [![devDependency Status](https://david-dm.org/dragoscirjan/nodejs-sophia/dev-status.svg)](https://david-dm.org/dragoscirjan/nodejs-sophia#info=devDependencies) -->
+[![Build Status](https://api.travis-ci.org/ITMCdev/nodejs-sophia.svg?branch=master)](http://travis-ci.org/ITMCdev/nodejs-sophia)
+<!-- [![Coverage Status](https://img.shields.io/coveralls/ITMCdev/nodejs-sophia.svg)](https://coveralls.io/r/ITMCdev/nodejs-sophia?branch=master) -->
+<!-- [![Dependency Status](https://david-dm.org/ITMCdev/nodejs-sophia.svg)](https://david-dm.org/ITMCdev/nodejs-sophia) -->
+<!-- [![devDependency Status](https://david-dm.org/ITMCdev/nodejs-sophia/dev-status.svg)](https://david-dm.org/ITMCdev/nodejs-sophia#info=devDependencies) -->
 <!-- [![Codacy Badge](https://www.codacy.com/project/badge/03d414fc2e264ef4b40456aae5b52108)](https://www.codacy.com/public/alex/nodejs-sophia) -->
 
 > Tool for masive html analysis, usefull for SEO and OPA (One Page Application) indexing.
