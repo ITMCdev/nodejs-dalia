@@ -11,7 +11,7 @@
 
 ## Overview
 
-**Dalia** is a flexible library that uses PhantomJS to index webpages served from your site. A page is only saved
+**Dalia** is a flexible library that uses [PhantomJS](http://phantomjs.org/) to index webpages served from your site. A page is only saved
 when a specified selector is detected visible in the output html. This tool is useful when your site is largely ajax
 content, or an SPA, and you want your dynamic content indexed by search engines.
 
@@ -105,8 +105,8 @@ Using (sitemap)[https://www.npmjs.com/package/sitemap], you can create your own 
 
 ```javascript
 
-const Dalia = require('dalia');
-const sitemap = require('nodejs-dalia');
+const Dalia = require('dalia').Dalia;
+const sitemap = require('html-snapshots');
 
 const options = {
     maxDepth: 2,
@@ -133,8 +133,8 @@ Using (html-snapshots)[https://github.com/localnerve/html-snapshots], you can al
 
 ```javascript
 
-const Dalia = require('dalia');
-const htmlSnapshots = require('nodejs-dalia');
+const Dalia = require('dalia').Dalia;
+const sitemap = require('html-snapshots');
 
 const options = {
     maxDepth: 2,
@@ -166,8 +166,8 @@ Ofcourse, you can always use the version above and `.htaccess` to do the same th
 
 ```javascript
 
-const Dalia = require('dalia');
-const htmlSnapshots = require('nodejs-dalia');
+const Dalia = require('dalia').Dalia;
+const sitemap = require('html-snapshots');
 
 const options = {
     maxDepth: 2,

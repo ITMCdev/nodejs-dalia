@@ -117,26 +117,35 @@ export class Dalia extends EventEmitter {
     return (function _indexUrls(options) {
       // log
       self.logger.trace('Queue:', JSON.stringify(options.queue), options.queue.length, 'to go');
+      self.logger.debug('Queue:', options.queue.length, 'to go');
       // If the queue is not empty, obtain the first element from the queue (it's a LIFO queue)
       // and start scanning its content (but only if the depth is good).
       if (options.queue.length > 0) {
         // obtain url structure
         let cUrl = options.queue.shift();
+        self.logger.debug("Indexing:", JSON.stringify(cUrl));
         // add url to ignore list
         options.ignore.push(cUrl.url);
         //emit
         self.emit('dalia:urlFound', self, options, cUrl);
         // add url to found list
-        self.found[options.session].push(cUrl.url);
+        if (self.found[options.session].indexOf(cUrl.url) < 0) {
+          self.found[options.session].push(cUrl.url);
+        }
         if (cUrl.depth >= 0) {
           // @see Dalia::phantomRun()
           return self.phantomRun(cUrl, options)
             // Push the new constructed url structures to the queue. Also, they
             // will be pushed to the found list.
             .then(data => {
-              data.forEach(_cUrl => options.queue.push(_cUrl));
+              data.forEach(_cUrl => {
+                if (options.queue.filter(v => _cUrl.url == v.url && _cUrl.depth == v.depth).length == 0) {
+                  options.queue.push(_cUrl);
+                }
+              });
               // emit partial found event
               self.emit('dalia:phantom:partialFound', self, options, data.map(_cUrl => _cUrl.url));
+              self.logger.debug("Discovered", data.length, 'new links,', self.found[options.session].length, 'indexed');
               return data;
             })
             // Call the recursive function, in order to move processing to
