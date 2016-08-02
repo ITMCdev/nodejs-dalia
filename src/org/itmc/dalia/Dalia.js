@@ -139,7 +139,7 @@ export class Dalia extends EventEmitter {
             // will be pushed to the found list.
             .then(data => {
               data.forEach(_cUrl => {
-                if (options.queue.filter(v => _cUrl.url == v.url && _cUrl.depth == v.depth).length == 0) {
+                if (options.queue.filter(v => self.sUrlEquals(_cUrl, v)).length == 0) {
                   options.queue.push(_cUrl);
                 }
               });
@@ -193,40 +193,40 @@ export class Dalia extends EventEmitter {
           let cUrl = options.queue.shift();
           let promises = null;
           if (!Array.isArray(cUrl)) {
-            if (cUrl.depth >= 0) {
-              // push url to ignore list
-              options.ignore.push(cUrl.url);
-              // emit
-              self.emit('dalia:urlFound', self, options, cUrl);
-              // add url to found list
-              self.found[options.session].push(cUrl.url);
-              promises = [self.phantomRun(cUrl, options)];
-            } else {
-              // emit
-              self.emit('dalia:queue:depthExceed', self, options, cUrl);
-              // log
-              self.logger.warn('Depth Exceeded:', JSON.stringify(cUrl));
-              promises = [];
-            }
-          } else {
-            promises = cUrl.filter(_cUrl => {
-              // push url to ignore list
-              options.ignore.push(_cUrl.url);
-              // emit
-              self.emit('dalia:urlFound', self, options, _cUrl);
-              // add url to found list
-              self.found[options.session].push(_cUrl.url);
-              // depth check
-              if (_cUrl.depth < 0) {
-                // emit
-                self.emit('dalia:queue:depthExceed', self, options, _cUrl);
-                // log
-                self.logger.warn('Depth Exceeded:', JSON.stringify(_cUrl));
-                return false;
-              }
-              return true;
-            }).map(_cUrl => self.phantomRun(_cUrl, options));
+            cUrl = [cUrl];
           }
+
+          promises = cUrl.filter(_cUrl => {
+            // push url to ignore list
+            options.ignore.push(_cUrl.url);
+            // emit
+            self.emit('dalia:urlFound', self, options, _cUrl);
+            // add url to found list
+            self.found[options.session].push(_cUrl.url);
+            // depth check
+            if (_cUrl.depth < 0) {
+              // emit
+              self.emit('dalia:queue:depthExceed', self, options, _cUrl);
+              // log
+              self.logger.warn('Depth Exceeded:', JSON.stringify(_cUrl));
+              return false;
+            }
+            // search for the url in all the structures, so it won't be added to queue again
+            if (options.queue.filter(v => {
+              var found = false;
+              if (Array.isArray(v)) {
+                if (v.filter(w => self.sUrlEquals(cUrl, w)).length) {
+                  found = true;
+                }
+                return found;
+              }
+              return self.sUrlEquals(cUrl, v);
+            }).length) {
+              return false;
+            }
+            return true;
+          }).map(_cUrl => self.phantomRun(_cUrl, options));
+
           if (promises.length) {
             return Promise.all(promises)
               // for each sets of _data, push the new url sets to queue
@@ -256,6 +256,7 @@ export class Dalia extends EventEmitter {
     let self = this;
     // one link should assume only one step
     options.steps = 1;
+    options.trace = [];
     // retunring a recusrive function call
     return (
       /**
@@ -274,42 +275,33 @@ export class Dalia extends EventEmitter {
           options.steps --;
           //
           if (!Array.isArray(options.sUrl)) {
-            if (sUrl.depth >= 0) {
-              // push url to ignore list
-              options.ignore.push(sUrl.url);
-              // emit
-              self.emit('dalia:urlFound', self, options, sUrl);
-              // add url to found list
-              self.found[options.session].push(sUrl.url);
-              // create prommise list
-              promises = [self.phantomRun(sUrl, options)];
-            } else {
-              // emit
-              self.emit('dalia:queue:depthExceed', self, options, sUrl);
-              // log
-              self.logger.warn('Depth Exceeded:', JSON.stringify(sUrl));
-              promises = [];
-            }
-          } else {
-            // filter found url by depth and create prommise list
-            promises = sUrl.filter(_sUrl => {
-              // push url to ignore list
-              options.ignore.push(_sUrl.url);
-              // emit
-              self.emit('dalia:urlFound', self, options, _sUrl);
-              // add url to found list
-              self.found[options.session].push(_sUrl.url);
-              // depth condition
-              if (_sUrl.depth < 0) {
-                // emit
-                self.emit('dalia:queue:depthExceed', self, options, _sUrl);
-                // log
-                self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
-                return false;
-              }
-              return true;
-            }).map(_sUrl => { return self.phantomRun(_sUrl, options); })
+            sUrl = [sUrl];
           }
+
+          // filter found url by depth and create prommise list
+          promises = sUrl.filter(_sUrl => {
+            // push url to ignore list
+            options.ignore.push(_sUrl.url);
+            // emit
+            self.emit('dalia:urlFound', self, options, _sUrl);
+            // add url to found list
+            self.found[options.session].push(_sUrl.url);
+            // depth condition
+            if (_sUrl.depth < 0) {
+              // emit
+              self.emit('dalia:queue:depthExceed', self, options, _sUrl);
+              // log
+              self.logger.warn('Depth Exceeded:', JSON.stringify(_sUrl));
+              return false;
+            }
+            // don't add url if it is already in scanning process
+            if (options.trace.filter(v => self.sUrlEquals(v, _sUrl)).length) {
+              return false;
+            }
+            options.trace.push(_sUrl);
+            return true;
+          }).map(_sUrl => { return self.phantomRun(_sUrl, options); });
+
           if (promises.length) {
             return Promise.all(promises)
               .then(data => {
@@ -439,6 +431,16 @@ export class Dalia extends EventEmitter {
     //   throw e;
     // }
     // return false;
+  }
+
+  /**
+   * Compare two url structures (if they are equals) {url:, depth:}
+   * @param  {Object} sUrl1
+   * @param  {Object} sUrl2
+   * @return {Boolean}
+   */
+  sUrlEquals(sUrl1, sUrl2) {
+    return sUrl1.url === sUrl2.url && sUrl1.depth === sUrl2.depth;
   }
 
   /**
