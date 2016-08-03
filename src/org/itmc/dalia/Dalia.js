@@ -15,6 +15,10 @@ const extend = require('extend');
 const uuid = require('uuid');
 
 const path = require('path');
+/**
+ * @var {EventEmitter}
+ * @see https://nodejs.org/api/events.html#events_class_eventemitter
+ */
 const EventEmitter = require('events');
 
 /**
@@ -22,9 +26,41 @@ const EventEmitter = require('events');
 */
 export class Dalia extends EventEmitter {
 
+  /**
+   * [INDEX_URL_MODE_QUEUE description]
+   * @type {Number}
+   */
   static INDEX_URL_MODE_QUEUE = 0x0001;
+
+  /**
+   * [INDEX_URL_MODE_QUEUE description]
+   * @type {Number}
+   */
   static INDEX_URL_MODE_RTREE = 0x0002;
+
+  /**
+   * [INDEX_URL_MODE_QUEUE description]
+   * @type {Number}
+   */
   static INDEX_URL_MODE_QTREE = 0x0003;
+
+  // /**
+  //  * [_found description]
+  //  * @type {Array}
+  //  */
+  // private _found = null;
+  //
+  // /**
+  //  * [_logger description]
+  //  * @type {Object}
+  //  */
+  // private _logger = null;
+  //
+  // /**
+  //  * [_phantom description]
+  //  * @type {Phantom}
+  //  */
+  // private _phantom = null;
 
   static defaultOptions = {
     indexMode: 0x0001,                  // urls can be indexed by using a lifo queue which should

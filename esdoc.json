@@ -1,0 +1,26 @@
+{
+  "source": "./src",
+  "destination": "./doc",
+  "includes": ["\\.(js|es6)$"],
+  "excludes": ["\\.config\\.(js|es6)$"],
+  "access": ["public", "protected"],
+  "autoPrivate": true,
+  "unexportIdentifier": false,
+  "undocumentIdentifier": true,
+  "builtinExternal": true,
+  "index": "./README.md",
+  "package": "./package.json",
+  "coverage": true,
+  "includeSource": true,
+  "test": {
+    "type": "mocha",
+    "source": "./test",
+    "includes": ["Test\\.(js|es6)$"],
+    "excludes": ["\\.config\\.(js|es6)$"]
+  },
+  "title": "Dalia (SPA) SEO Tool",
+  "plugins": [
+    {"name": "esdoc-es7-plugin"}
+  ],
+  "lint": true
+}

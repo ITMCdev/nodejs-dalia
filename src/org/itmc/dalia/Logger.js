@@ -18,8 +18,8 @@ export class Logger {
    * @link https://www.npmjs.com/package/debug-logger
    *
    * @method getInstance
-   * @param  {[type]}    name =             'dalia' [description]
-   * @return {Object}         [description]
+   * @param  {String}    name Instance name
+   * @return {Object}         Logger object
    */
   static getInstance(name = 'dalia') {
     return require('debug-logger')(name);

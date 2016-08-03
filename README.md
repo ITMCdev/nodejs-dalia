@@ -1,4 +1,4 @@
-# nodejs-dalia
+# Dalia (SPA) SEO Tool
 
 [![npm version](https://badge.fury.io/js/nodejs-dalia.svg)](http://badge.fury.io/js/dalia)
 [![Build Status](https://api.travis-ci.org/ITMCdev/nodejs-dalia.svg?branch=master)](http://travis-ci.org/ITMCdev/nodejs-dalia)
@@ -210,4 +210,14 @@ module.exports = function(content) {
 </body>`)
     ;
 };
+```
+
+## Documentation
+
+To generate documentation, please run (within the project root folder):
+
+```shell
+npm install -g esdoc    # globally install esdoc
+npm install             # install project packages (esdoc depends on packages (for now))
+esdoc -c esdoc.json     # run esdoc
 ```
