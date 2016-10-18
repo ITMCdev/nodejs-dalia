@@ -1,6 +1,7 @@
 # Logs
 logs
 *.log
+skeleton-navigation/
 
 # Runtime data
 pids

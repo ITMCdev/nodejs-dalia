@@ -39,7 +39,7 @@ export class Phantom extends EventEmitter {
   }
 
   static defaultOptions = {
-    phantomOptions: ["--ssl-protocol=any", "--ignore-ssl-errors=true"]
+    phantomOptions: ["--ssl-protocol=any", "--ignore-ssl-errors=true", "--load-images=false"]
   };
 
   /**

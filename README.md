@@ -95,7 +95,7 @@ urls, in order to either create page snapshots, or create sitemap xml.
 
 #### Dalia's events:
 
-TODO:
+TODO: Events are not documented. Please check [code](src/org/itmc/dalia) for this matter.
 
 ## Usage Examples
 
@@ -211,6 +211,29 @@ module.exports = function(content) {
     ;
 };
 ```
+
+## Testing
+
+Download and install [Aurelia Skeleton](https://github.com/aurelia/skeleton-navigation) `esnext` version.
+
+```bash
+git clone https://github.com/aurelia/skeleton-navigation.git
+cd skeleton-navigation/skeleton-esnext
+npm install
+jspm install
+gulp watch
+```
+
+Than run `mocha` in Dalia project folder.
+
+```bash
+npm install mocha -g # only if not installed
+
+cd nodejs-dalia
+mocha # we recommend: clean; gulp build && mocha
+```
+
+> NOTE: Events are not tested.
 
 ## Documentation
 
