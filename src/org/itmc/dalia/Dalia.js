@@ -154,7 +154,7 @@ export class Dalia extends EventEmitter {
         if (cUrl.depth >= 0) {
           // @see Dalia::phantomRun()
           return self.phantomRun(cUrl, opts)
-            .catch(e => reject(e))
+            // .catch(e => Promise.reject(e))
             // Push the new constructed url structures to the queue. Also, they
             // will be pushed to the found list.
             .then(data => {

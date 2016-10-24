@@ -1,6 +1,6 @@
 {
   "name": "dalia",
-  "version": "0.0.3",
+  "version": "0.0.3-rc2",
   "description": "SEO Tool for SPA and not only",
   "main": "index.js",
   "scripts": {
